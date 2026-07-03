@@ -1,0 +1,35 @@
+# --- Binarios de Visual Studio ---
+.vs/
+*.user
+*.suo
+*.db
+*.opensdf
+*.sdf
+*.aps
+*.log
+*.ilk
+*.exp
+*.pdb
+*.obj
+*.o
+*.tlog
+*.idb
+*.obj
+*.pch
+*.ipch
+*.res
+*.sbr
+*.bsc
+*.manifest
+*.lastbuildstate
+
+# --- Carpetas de salida (Donde Visual Studio compila) ---
+x64/
+x86/
+Debug/
+Release/
+Bin/
+Build/
+bin/
+build/
+obj/
