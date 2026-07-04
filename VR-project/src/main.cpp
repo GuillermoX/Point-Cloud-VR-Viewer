@@ -1,6 +1,11 @@
 //Importante que GLAD se importe antes que otras librerias que usan funciones de OpenGL
 #include <glad/glad.h>
+
+#define GLFW_EXPOSE_NATIVE_WIN32 
+#define GLFW_EXPOSE_NATIVE_WGL
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
+
 #include <iostream>
 #include <cmath>
 #include <glm/gtc/type_ptr.hpp>
@@ -10,6 +15,8 @@
 #include <Shader.hpp>
 #include <Camera.hpp>
 #include <Model.hpp>
+
+#include <VRManager.hpp>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -82,6 +89,10 @@ int main()
     // load models
     // -----------
     Model ourModel("assets/objects/backpack/backpack.obj");
+
+
+    // VR setup
+    VRManager vr_manager = VRManager(GetDC(glfwGetWin32Window(window)), glfwGetWGLContext(window));
 
 
     // draw in wireframe
