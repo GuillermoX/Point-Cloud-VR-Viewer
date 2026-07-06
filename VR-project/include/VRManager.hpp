@@ -2,6 +2,12 @@
 #define VRMANAGER_H
 
 #include <windows.h>
+#include <vector>
+#include <iostream>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 // Tell OpenXR we are in Windows and Using OpenGL
 #define XR_USE_PLATFORM_WIN32
@@ -26,8 +32,21 @@ public:
 	XrSession  m_session;        // Current session
 	XrSpace    m_appSpace;       // Coordinates origin
 	XrSwapchain m_swapchain;     // Where OpenGL paints
+	std::vector<XrSwapchainImageOpenGLKHR> m_swapchainImages;
+	uint32_t m_visorHeight;
+	uint32_t m_visorWidth;
 	
-	VRManager(HDC window, HGLRC render_context);
+	VRManager(GLFWwindow* glfwWindow);
+	uint32_t InitFrame();
+	void GetViewProjectionMatrices();
+	void FinishFrame();
+	glm::vec3 GetCameraPosition(int eyeIndex);
+	glm::mat4 GetViewMatrix(int eyeIndex);
+	glm::mat4 GetProjectionMatrix(int eyeIndex);
+
+private:
+	XrFrameState frameState;
+	XrView views[2];
 };
 
 
