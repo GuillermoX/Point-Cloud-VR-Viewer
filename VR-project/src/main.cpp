@@ -19,20 +19,21 @@
 #include <VRManager.hpp>
 
 #define VR_ENABLED true
+#define WIRE_FRAME_MODE false
 
+// callback functions declaration
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow* window);
+void processInput(GLFWwindow* window, Camera& camera);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+unsigned int scr_width = 1920;
+unsigned int scr_height = 1080;
 
-// camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
+// virtual camera object (only in no VR mode)
+float lastX = scr_width / 2.0f;     // position first mouse coordinates to screen center
+float lastY = scr_height / 2.0f;
 bool firstMouse = true;
 
 // timing
@@ -42,7 +43,7 @@ float lastFrame = 0.0f;
 
 int main()
 {
-    // glfw: initialize and configure
+    // glfw: Initialize and configure
     // ------------------------------
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -55,10 +56,10 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // glfw window creation
+    // Glfw window creation
     // --------------------
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(scr_width, scr_height, "VR-cloud-point-viewer", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -66,14 +67,19 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
+    
+    // Bind functions to glfw callbacks
+    if (!VR_ENABLED)
+    {
+        glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+        glfwSetCursorPosCallback(window, mouse_callback);
+        glfwSetScrollCallback(window, scroll_callback);
+    }
 
-    // tell GLFW to capture our mouse
+    // Tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    // glad: load all OpenGL function pointers
+    // glad: Load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -81,26 +87,24 @@ int main()
         return -1;
     }
 
-    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+    // Tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     stbi_set_flip_vertically_on_load(true);
 
-    // configure global opengl state
-    // -----------------------------
+    // Configure global opengl state
     glEnable(GL_DEPTH_TEST);
 
-    // build and compile shaders
-    // -------------------------
+    // Build and compile shaders
     Shader ourShader("assets/shaders/shader.vert", "assets/shaders/shader.frag");
-
-    // load models
-    // -----------
+    
+    // Load Models
     Model ourModel("assets/objects/backpack/backpack.obj");
 
-
-    // VR setup
+    
+    std::unique_ptr<Camera> camera;
+    std::unique_ptr<VRManager> vr_manager;
+    // ------------- VR Setup ----------------
     GLuint vr_FBO = 0;
     GLuint vr_depthBuffer = 0;
-    std::unique_ptr<VRManager> vr_manager;
     if (VR_ENABLED)
     {    
         std::cout << "INFO: ----- VR IS ENABLED -----"  << std::endl;
@@ -121,15 +125,22 @@ int main()
         // 3. Dejarlo desvinculado por ahora para no interferir con el PC
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+    else    // ----------- NO VR Setup ----------------
+    { 
+        camera = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 3.0f));
+        glfwSetWindowUserPointer(window, camera.get());
+    }
 
-    // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // Draw in wireframe
+    if (WIRE_FRAME_MODE)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    
+    glViewport(0, 0, scr_width, scr_height);
 
-    // render loop
-    // -----------
+    // ----------- RENDER LOOP ------------
     while (!glfwWindowShouldClose(window))
     {
-        // per-frame time logic
+        // Per-frame time logic
         // --------------------
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
@@ -151,18 +162,17 @@ int main()
         }
 
 
-        // input
+        // Process Input
         // -----
-        processInput(window);
+        processInput(window, *camera);
 
-        // render
+        // Render
         // ------
-
-        // don't forget to enable shader before setting uniforms
         ourShader.use();
 
 
-        //Light uniforms
+        // ---------------------- LIGHT UNIFORMS ---------------------------------
+        // TODO: Encapsulation of light management
         glm::vec3 lightColor(1.0f);
 
         glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
@@ -182,29 +192,32 @@ int main()
         glUniform1f(glGetUniformLocation(ourShader.ID, "light.linear"), 0.09f);
         glUniform1f(glGetUniformLocation(ourShader.ID, "light.quadratic"), 0.032f);
 
-        // Render per eye
-        int num_eyes_render = 1;
+                
+        // -------- PER EYE RENDER ----------
+        int num_eyes_render = 1;    // In Screen mode we render just one eye (screen mode)
         if (VR_ENABLED)
-            num_eyes_render = 2;
+            num_eyes_render = 2;    // In VR mode we render two eyes
         for (int eyeIndex = 0; eyeIndex < num_eyes_render; eyeIndex++)
         {
             if (VR_ENABLED)
             {
-                // 2. Vinculamos TU Framebuffer (el FBO que creaste en tu motor)
+                // Bind VR FrameBuffer
                 glBindFramebuffer(GL_FRAMEBUFFER, vr_FBO);
-                // 3. Vincular también nuestro buffer de profundidad (para el Z-test)
+
+                // Bind VR Depth FrameBuffer
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, vr_depthBuffer);
    
-                // 3. Acoplamos la textura de OpenXR a nuestro FBO.
-                // Si configuraste OpenXR como un Texture Array (capas para cada ojo):
-                // En el bucle de los ojos, usas 'ojoIndex' (0 para izquierdo, 1 para derecho)
+                // Bind OpenXR texture to the VR FBO (eyeIndex indicates texture layer: 0 -> left eye / 1 -> right eye)
                 glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, openxrTexture, 0, eyeIndex);
             }
 
-            //Clean screen for this eye
+            // Clean screen for current eye
             glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            
 
+            // Obtain camera data necessary to render
+            // --------------------------------------
             glm::vec3 cameraPosition;
             glm::mat4 projection;
             glm::mat4 view;
@@ -216,49 +229,53 @@ int main()
             }
             else
             {
-                cameraPosition = camera.Position;
-                projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-                view = camera.GetViewMatrix();
+                cameraPosition = camera->Position;
+                projection = glm::perspective(glm::radians(camera->Zoom), (float)scr_width / (float)scr_height, 0.1f, 100.0f);
+                view = camera->GetViewMatrix();
             }
 
-            // View Position
+            // View Position in world space (camera position)
             glUniform3f(glGetUniformLocation(ourShader.ID, "viewPos"), cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
-            // view/projection transformations
+            // View/projection transformations
             glUniformMatrix4fv(glGetUniformLocation(ourShader.ID, "projection"), 1, false, glm::value_ptr(projection));
             glUniformMatrix4fv(glGetUniformLocation(ourShader.ID, "view"), 1, false, glm::value_ptr(view));
 
-            // render the loaded model
+            // Render the loaded model
+            // -----------------------
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f)); // translate it down so it's at the center of the scene
             model = glm::scale(model, glm::vec3(0.25f, 0.25f, 0.25f));	// it's a bit too big for our scene, so scale it down
             glUniformMatrix4fv(glGetUniformLocation(ourShader.ID, "model"), 1, false, glm::value_ptr(model));
+
             ourModel.Draw(ourShader);
         }
-    
+           
+        // Finish the frame in VR mode or screen mode
         if(VR_ENABLED)
             vr_manager->FinishFrame();
         else
             glfwSwapBuffers(window);
 
 
-        // glfw: poll IO events (keys pressed/released, mouse moved etc.)
+        // glfw: Poll IO events (keys pressed/released, mouse moved etc.)
         glfwPollEvents();
     }
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // glfw: Terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// Process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow* window, Camera& camera)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
+    // Get camera pointer
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         camera.ProcessKeyboard(Camera::FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -269,7 +286,7 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(Camera::RIGHT, deltaTime);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// glfw: Whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -278,7 +295,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-// glfw: whenever the mouse moves, this callback is called
+// glfw: Whenever the mouse moves, this callback is called
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
@@ -298,12 +315,16 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    // Get camera pointer
+    Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+    camera->ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    // Get camera pointer
+    Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+    camera->ProcessMouseScroll(static_cast<float>(yoffset));
 }
