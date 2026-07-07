@@ -21,28 +21,29 @@
 #define VR_ENABLED true
 #define WIRE_FRAME_MODE false
 
-// callback functions declaration
+// Callback functions declaration
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window, Camera& camera);
 
-// settings
+// Screen Settings
 unsigned int scr_width = 1920;
 unsigned int scr_height = 1080;
 
-// virtual camera object (only in no VR mode)
 float lastX = scr_width / 2.0f;     // position first mouse coordinates to screen center
 float lastY = scr_height / 2.0f;
 bool firstMouse = true;
 
-// timing
+// Timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 
 int main()
 {
+    //----------- INITIAL CONFIGURATION ------------
+
     // glfw: Initialize and configure
     // ------------------------------
     glfwInit();
@@ -125,7 +126,7 @@ int main()
         // 3. Dejarlo desvinculado por ahora para no interferir con el PC
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-    else    // ----------- NO VR Setup ----------------
+    else    // ----------- Screen Mode Setup ----------------
     { 
         camera = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 3.0f));
         glfwSetWindowUserPointer(window, camera.get());
