@@ -18,6 +18,8 @@
 
 #include <VRManager.hpp>
 
+#define VR_ENABLED true
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -46,7 +48,8 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Requerido por algunos Runtimes VR
+    if(VR_ENABLED)
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Requerido por algunos Runtimes VR
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -95,24 +98,29 @@ int main()
 
 
     // VR setup
-    std::cout << "GPU en uso por OpenGL: " << glGetString(GL_RENDERER) << std::endl;
-    VRManager vr_manager = VRManager(window);
     GLuint vr_FBO = 0;
     GLuint vr_depthBuffer = 0;
-    // 1. Crear el FBO "cascarón"
-    glGenFramebuffers(1, &vr_FBO);
+    std::unique_ptr<VRManager> vr_manager;
+    if (VR_ENABLED)
+    {    
+        std::cout << "INFO: ----- VR IS ENABLED -----"  << std::endl;
+        std::cout << "GPU en uso por OpenGL: " << glGetString(GL_RENDERER) << std::endl;
+        vr_manager = std::make_unique<VRManager>(window);
+        // 1. Crear el FBO "cascarón"
+        glGenFramebuffers(1, &vr_FBO);
 
-    // 2. Crear un Depth Buffer (Z-Buffer) para que tus puntos se tapen correctamente entre sí en VR
-    // El tamaño tiene que ser exactamente el ancho y alto del visor que te dio OpenXR
-    glGenRenderbuffers(1, &vr_depthBuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, vr_depthBuffer);
+        // 2. Crear un Depth Buffer (Z-Buffer) para que tus puntos se tapen correctamente entre sí en VR
+        // El tamaño tiene que ser exactamente el ancho y alto del visor que te dio OpenXR
+        glGenRenderbuffers(1, &vr_depthBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, vr_depthBuffer);
 
-    // Si estás usando Texture Array (capas para cada ojo), el Depth Buffer también debe ser un Array
-    // Si usas Side-by-Side o texturas simples, usarías glRenderbufferStorage
-    glRenderbufferStorageMultisample(GL_RENDERBUFFER, 0, GL_DEPTH_COMPONENT24, vr_manager.m_visorWidth, vr_manager.m_visorHeight);
+        // Si estás usando Texture Array (capas para cada ojo), el Depth Buffer también debe ser un Array
+        // Si usas Side-by-Side o texturas simples, usarías glRenderbufferStorage
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, 0, GL_DEPTH_COMPONENT24, vr_manager->m_visorWidth, vr_manager->m_visorHeight);
 
-    // 3. Dejarlo desvinculado por ahora para no interferir con el PC
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // 3. Dejarlo desvinculado por ahora para no interferir con el PC
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -129,19 +137,18 @@ int main()
 
         // VR frame initialization
         // ----------------------
-        uint32_t imageIndex = vr_manager.InitFrame();
-        // 1. Obtenemos la textura de OpenGL correspondiente a ese índice
-        // (m_swapchainImages es el vector que rellenaste al crear el swapchain)
-        GLuint openxrTexture = vr_manager.m_swapchainImages[imageIndex].image;
+        uint32_t imageIndex;
+        GLuint openxrTexture;
+        if (VR_ENABLED)
+        {
+            imageIndex = vr_manager->InitFrame();
+            // 1. Obtenemos la textura de OpenGL correspondiente a ese índice
+            // (m_swapchainImages es el vector que rellenaste al crear el swapchain)
+            openxrTexture = vr_manager->m_swapchainImages[imageIndex].image;
+            // 4. ¡Listo! Todo lo que dibujes ahora con tu motor caerá en las gafas
+            glViewport(0, 0, vr_manager->m_visorWidth, vr_manager->m_visorHeight);
 
-        
-
-        
-        // Si usas un formato de textura normal (no Array), usarías:
-        // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, openxrTexture, 0);
-
-        // 4. ¡Listo! Todo lo que dibujes ahora con tu motor caerá en las gafas
-        glViewport(0, 0, vr_manager.m_visorWidth, vr_manager.m_visorHeight);
+        }
 
 
         // input
@@ -176,29 +183,48 @@ int main()
         glUniform1f(glGetUniformLocation(ourShader.ID, "light.quadratic"), 0.032f);
 
         // Render per eye
-        for (int eyeIndex = 0; eyeIndex < 2; eyeIndex++)
+        int num_eyes_render = 1;
+        if (VR_ENABLED)
+            num_eyes_render = 2;
+        for (int eyeIndex = 0; eyeIndex < num_eyes_render; eyeIndex++)
         {
-            // 2. Vinculamos TU Framebuffer (el FBO que creaste en tu motor)
-            glBindFramebuffer(GL_FRAMEBUFFER, vr_FBO);
-            // 3. Vincular también nuestro buffer de profundidad (para el Z-test)
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, vr_depthBuffer);
+            if (VR_ENABLED)
+            {
+                // 2. Vinculamos TU Framebuffer (el FBO que creaste en tu motor)
+                glBindFramebuffer(GL_FRAMEBUFFER, vr_FBO);
+                // 3. Vincular también nuestro buffer de profundidad (para el Z-test)
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, vr_depthBuffer);
    
-            // 3. Acoplamos la textura de OpenXR a nuestro FBO.
-            // Si configuraste OpenXR como un Texture Array (capas para cada ojo):
-            // En el bucle de los ojos, usas 'ojoIndex' (0 para izquierdo, 1 para derecho)
-            glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, openxrTexture, 0, eyeIndex);
+                // 3. Acoplamos la textura de OpenXR a nuestro FBO.
+                // Si configuraste OpenXR como un Texture Array (capas para cada ojo):
+                // En el bucle de los ojos, usas 'ojoIndex' (0 para izquierdo, 1 para derecho)
+                glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, openxrTexture, 0, eyeIndex);
+            }
 
             //Clean screen for this eye
             glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            glm::vec3 cameraPosition = vr_manager.GetCameraPosition(eyeIndex);
+            glm::vec3 cameraPosition;
+            glm::mat4 projection;
+            glm::mat4 view;
+            if (VR_ENABLED)
+            {
+                cameraPosition = vr_manager->GetCameraPosition(eyeIndex);
+                projection = vr_manager->GetProjectionMatrix(eyeIndex);
+                view = vr_manager->GetViewMatrix(eyeIndex);
+            }
+            else
+            {
+                cameraPosition = camera.Position;
+                projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+                view = camera.GetViewMatrix();
+            }
+
             // View Position
             glUniform3f(glGetUniformLocation(ourShader.ID, "viewPos"), cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
             // view/projection transformations
-            glm::mat4 projection = vr_manager.GetProjectionMatrix(eyeIndex);
-            glm::mat4 view = vr_manager.GetViewMatrix(eyeIndex);
             glUniformMatrix4fv(glGetUniformLocation(ourShader.ID, "projection"), 1, false, glm::value_ptr(projection));
             glUniformMatrix4fv(glGetUniformLocation(ourShader.ID, "view"), 1, false, glm::value_ptr(view));
 
@@ -209,8 +235,11 @@ int main()
             glUniformMatrix4fv(glGetUniformLocation(ourShader.ID, "model"), 1, false, glm::value_ptr(model));
             ourModel.Draw(ourShader);
         }
-
-        vr_manager.FinishFrame();
+    
+        if(VR_ENABLED)
+            vr_manager->FinishFrame();
+        else
+            glfwSwapBuffers(window);
 
 
         // glfw: poll IO events (keys pressed/released, mouse moved etc.)
