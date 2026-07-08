@@ -22,7 +22,6 @@
 #include <GLFW/glfw3native.h>
 
 
-
 class VRManager
 {
 public:

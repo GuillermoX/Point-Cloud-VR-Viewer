@@ -23,6 +23,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\render\Mesh.cpp" />
     <ClCompile Include="src\render\Model.cpp" />
+    <ClCompile Include="src\render\SceneManager.cpp" />
     <ClCompile Include="src\render\Shader.cpp" />
     <ClCompile Include="src\render\VRManager.cpp" />
   </ItemGroup>
@@ -36,6 +37,7 @@
     <ClInclude Include="include\extern\stb_image.h" />
     <ClInclude Include="include\Mesh.hpp" />
     <ClInclude Include="include\Model.hpp" />
+    <ClInclude Include="include\SceneManager.hpp" />
     <ClInclude Include="include\Shader.hpp" />
     <ClInclude Include="include\VRManager.hpp" />
   </ItemGroup>
