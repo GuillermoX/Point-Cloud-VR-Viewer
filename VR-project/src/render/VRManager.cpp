@@ -66,7 +66,7 @@ VRManager::VRManager(GLFWwindow* glfwWindow)
         << XR_VERSION_MAJOR(graphicsRequirements.maxApiVersionSupported) << "."
         << XR_VERSION_MINOR(graphicsRequirements.maxApiVersionSupported) << std::endl;
     
-    // Create and Begin Session 
+    // Create Session 
     // ------------------------
     XrSessionCreateInfo sessionInfo = { XR_TYPE_SESSION_CREATE_INFO };
     sessionInfo.next = &graphicsBinding; // Pasamos la info de OpenGL
@@ -75,14 +75,6 @@ VRManager::VRManager(GLFWwindow* glfwWindow)
     result = xrCreateSession(m_instance, &sessionInfo, &m_session);
     if (result != XR_SUCCESS) {
         std::cout << "CRÍTICO: xrCreateSession falló con código " << result << std::endl;
-    }
-
-    XrSessionBeginInfo sessionBeginInfo = { XR_TYPE_SESSION_BEGIN_INFO };
-    sessionBeginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-
-    result = xrBeginSession(m_session, &sessionBeginInfo);
-    if (result != XR_SUCCESS) {
-        std::cout << "CRÍTICO: No se pudo iniciar la sesión: " << result << std::endl;
     }
 
     // Define World Center
@@ -146,11 +138,74 @@ VRManager::VRManager(GLFWwindow* glfwWindow)
         &imageCount,
         reinterpret_cast<XrSwapchainImageBaseHeader*>(m_swapchainImages.data())
     );
-
-
-
    
 
+    // Create Action Set
+    XrActionSetCreateInfo actionSetInfo{XR_TYPE_ACTION_SET_CREATE_INFO};
+    strcpy_s(actionSetInfo.actionSetName, "scene_actions");
+    strcpy_s(actionSetInfo.localizedActionSetName, "Scene Actions");
+    actionSetInfo.priority = 0;
+
+    result = xrCreateActionSet(m_instance, &actionSetInfo, &m_actionSet);
+    if (XR_FAILED(result)) {
+        std::cout << "ERROR: Failed creating Action Set, error code: " << result << std::endl;
+    }
+    
+    // Create Action
+    XrActionCreateInfo actionInfo{XR_TYPE_ACTION_CREATE_INFO};
+    actionInfo.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
+    strcpy_s(actionInfo.actionName, "move");
+    strcpy_s(actionInfo.localizedActionName, "Move Camera");
+    actionInfo.countSubactionPaths = 0;
+    actionInfo.subactionPaths = nullptr;
+
+    result = xrCreateAction(m_actionSet, &actionInfo, &m_moveAction);
+    if (XR_FAILED(result)) {
+        std::cout << "ERROR: Failed creating Action, error code: " << result << std::endl;
+    } 
+    
+    // Define Paths and Suggest Bindings
+    XrPath oculusTouchProfilePath;
+    xrStringToPath(m_instance, "/interaction_profiles/oculus/touch_controller", &oculusTouchProfilePath);
+
+    XrPath leftJoystickPath;
+    xrStringToPath(m_instance, "/user/hand/left/input/thumbstick", &leftJoystickPath);
+
+    // Maps action to left joystick
+    XrActionSuggestedBinding binding{};
+    binding.action = m_moveAction;
+    binding.binding = leftJoystickPath;
+
+    // Suggest Binding to Runtime
+    XrInteractionProfileSuggestedBinding suggestedBindings{XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
+    suggestedBindings.interactionProfile = oculusTouchProfilePath;
+    suggestedBindings.suggestedBindings = &binding;
+    suggestedBindings.countSuggestedBindings = 1;
+
+    result = xrSuggestInteractionProfileBindings(m_instance, &suggestedBindings);
+    if (XR_FAILED(result)) {
+        std::cout << "ERROR: Failed suggesting Bindings, error code: " << result << std::endl;
+    }
+    
+    // Link with Session
+    XrSessionActionSetsAttachInfo attachInfo{XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO};
+    attachInfo.countActionSets = 1;
+    attachInfo.actionSets = &m_actionSet;
+
+    result = xrAttachSessionActionSets(m_session, &attachInfo);
+    if (XR_FAILED(result)) {
+        std::cout << "ERROR: Failed linking Action Set with Session, error code: " << result << std::endl;
+    }
+    
+
+    // Begin Session
+    XrSessionBeginInfo sessionBeginInfo = { XR_TYPE_SESSION_BEGIN_INFO };
+    sessionBeginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+
+    result = xrBeginSession(m_session, &sessionBeginInfo);
+    if (result != XR_SUCCESS) {
+        std::cout << "CRITICAL: Session couldn't begin: " << result << std::endl;
+    }
 
 }
 
@@ -192,6 +247,9 @@ uint32_t VRManager::InitFrame()
     XrSwapchainImageWaitInfo waitImageInfo = { XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
     waitImageInfo.timeout = XR_INFINITE_DURATION;
     xrWaitSwapchainImage(m_swapchain, &waitImageInfo);
+    
+    // Update 
+    xrPollEvent;
 
     return imageIndex;
 }
@@ -243,7 +301,7 @@ void VRManager::FinishFrame()
 glm::vec3 VRManager::GetCameraPosition(int eyeIndex)
 {
     XrVector3f openxrPos = views[eyeIndex].pose.position;
-    return glm::vec3(openxrPos.x, openxrPos.y, openxrPos.z);
+    return glm::vec3(openxrPos.x + virtual_position.x, openxrPos.y + virtual_position.y, openxrPos.z + virtual_position.z);
 }
 
 glm::mat4 VRManager::GetViewMatrix(int eyeIndex)
@@ -253,7 +311,7 @@ glm::mat4 VRManager::GetViewMatrix(int eyeIndex)
 
     // Convert types to GLM (order of quaternion in GLM -> w, x, y, z)
     glm::quat rotation = glm::quat(openxrQuat.w, openxrQuat.x, openxrQuat.y, openxrQuat.z);
-    glm::vec3 position = glm::vec3(openxrPos.x, openxrPos.y, openxrPos.z);
+    glm::vec3 position = glm::vec3(openxrPos.x + virtual_position.x, openxrPos.y + virtual_position.y, openxrPos.z + virtual_position.z);
 
     // Build the transformation matrix of the camera (rotation * translation)
     glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), position) * glm::mat4_cast(rotation);
@@ -286,5 +344,83 @@ glm::mat4 VRManager::GetProjectionMatrix(int eyeIndex)
         nearZ,             // Near
         farZ               // Far
     );
+}
+
+void VRManager::ProcessInput(GLFWwindow* window, float delta_time)
+{
+     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+     XrPosef eyePose = views[0].pose;
+     glm::quat orientation(eyePose.orientation.w, eyePose.orientation.x, eyePose.orientation.y, eyePose.orientation.z);
+     glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
+     glm::vec3 eyeNormal = glm::normalize(orientation * forward);
+     eyeNormal.y = 0.0f;
+     glm::vec3 perpNormal = glm::cross(eyeNormal, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // Get camera pointer
+    /*if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+         virtual_position += eyeNormal * delta_time;
+     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+         virtual_position -= eyeNormal * delta_time;
+     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+         virtual_position += perpNormal * delta_time;
+     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+         virtual_position -= perpNormal * delta_time;
+    */
+    
+    syncActions();
+    XrActionStateVector2f joystickState{XR_TYPE_ACTION_STATE_VECTOR2F};
+    XrActionStateGetInfo getInfo{XR_TYPE_ACTION_STATE_GET_INFO};
+    getInfo.action = m_moveAction;
+    getInfo.subactionPath = XR_NULL_PATH; // O m_leftHandPath si lo separaste
+
+    XrResult result = xrGetActionStateVector2f(m_session, &getInfo, &joystickState);
+    if (result != XR_SUCCESS) {
+        std::cout << "Error al obtener estado: " << result << std::endl;
+    }
+    std::cout << "Mando Activo: " << (joystickState.isActive ? "SI" : "NO") 
+          << " | Valores: X=" << joystickState.currentState.x 
+          << " Y=" << joystickState.currentState.y << std::endl;
+
+    glm::vec2 joystickVector(0.0f, 0.0f);
+
+    if (joystickState.isActive && joystickState.changedSinceLastSync == XR_TRUE) {
+        std::cout << "LEYENDO MANDOOOOO" << std::endl;
+        // Aplicamos una pequeña zona muerta (deadzone) para evitar el "drifting"
+        float x = joystickState.currentState.x;
+        float y = joystickState.currentState.y;
+        
+        if (abs(x) > 0.15f || abs(y) > 0.15f) {
+            joystickVector = glm::vec2(x, y);
+        }
+    }
+
+    glm::vec3 moveDir = glm::vec3(joystickVector.x, 0.0f, -joystickVector.y);
+    moveDir = orientation * moveDir;
+    virtual_position += moveDir * delta_time;
+}
+
+
+
+void VRManager::syncActions()
+{
+    XrActiveActionSet activeActionSet{};
+    activeActionSet.actionSet = m_actionSet;
+    activeActionSet.subactionPath = XR_NULL_PATH;
+
+    XrEventDataBuffer eventBuffer{ XR_TYPE_EVENT_DATA_BUFFER };
+    while (xrPollEvent(m_instance, &eventBuffer) == XR_SUCCESS) {
+        eventBuffer.type = XR_TYPE_EVENT_DATA_BUFFER;
+    }
+
+    XrActionsSyncInfo syncInfo{XR_TYPE_ACTIONS_SYNC_INFO};
+    syncInfo.countActiveActionSets = 1;
+    syncInfo.activeActionSets = &activeActionSet;
+
+    XrResult result = xrSyncActions(m_session, &syncInfo);
+    if (XR_FAILED(result)) {
+        std::cout << "ERROR while synchronizing actions: " << result << std::endl;
+    }
 }
 

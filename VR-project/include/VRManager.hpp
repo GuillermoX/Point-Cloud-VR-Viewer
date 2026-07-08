@@ -35,6 +35,13 @@ public:
 	uint32_t m_visorHeight;
 	uint32_t m_visorWidth;
 	
+	// Action variables
+	XrActionSet m_actionSet{XR_NULL_HANDLE};
+	XrAction    m_moveAction{XR_NULL_HANDLE};
+	XrPath		m_leftHandPath{XR_NULL_PATH};
+
+	glm::vec3 virtual_position = glm::vec3(0.f);
+	
 	VRManager(GLFWwindow* glfwWindow);
 	uint32_t InitFrame();
 	void GetViewProjectionMatrices();
@@ -42,10 +49,13 @@ public:
 	glm::vec3 GetCameraPosition(int eyeIndex);
 	glm::mat4 GetViewMatrix(int eyeIndex);
 	glm::mat4 GetProjectionMatrix(int eyeIndex);
+	void ProcessInput(GLFWwindow* window, float delta_time);
 
 private:
 	XrFrameState frameState;
 	XrView views[2];
+
+	void syncActions();
 };
 
 

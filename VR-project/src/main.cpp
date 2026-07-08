@@ -7,7 +7,7 @@
 
 int main()
 {
-    SceneManager scene_manager(1980, 1200, false);
+    SceneManager scene_manager(800, 600, true);
 
     // Build and compile shaders
     Shader ourShader("assets/shaders/shader.vert", "assets/shaders/shader.frag");

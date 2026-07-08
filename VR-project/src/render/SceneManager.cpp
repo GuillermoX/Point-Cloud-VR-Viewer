@@ -147,7 +147,12 @@ void SceneManager::ExecuteRenderLoop()
 
         // Process Input
         // -----
-        processInput();
+        if (_scene_config.vr_enabled)
+        {
+            _vr_manager_ptr->ProcessInput(_window, _timing.deltaTime);
+        }
+        else
+            processInput();
 
         // Render
         // ------
