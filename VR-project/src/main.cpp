@@ -8,6 +8,7 @@
 int main()
 {
     SceneManager scene_manager(800, 600, true);
+    scene_manager.FlyingMode(true);
 
     // Build and compile shaders
     Shader ourShader("assets/shaders/shader.vert", "assets/shaders/shader.frag");

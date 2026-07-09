@@ -346,59 +346,40 @@ glm::mat4 VRManager::GetProjectionMatrix(int eyeIndex)
     );
 }
 
-void VRManager::ProcessInput(GLFWwindow* window, float delta_time)
-{
-     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-     XrPosef eyePose = views[0].pose;
-     glm::quat orientation(eyePose.orientation.w, eyePose.orientation.x, eyePose.orientation.y, eyePose.orientation.z);
-     glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
-     glm::vec3 eyeNormal = glm::normalize(orientation * forward);
-     eyeNormal.y = 0.0f;
-     glm::vec3 perpNormal = glm::cross(eyeNormal, glm::vec3(0.0f, 1.0f, 0.0f));
-
-    // Get camera pointer
-    /*if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-         virtual_position += eyeNormal * delta_time;
-     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-         virtual_position -= eyeNormal * delta_time;
-     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-         virtual_position += perpNormal * delta_time;
-     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-         virtual_position -= perpNormal * delta_time;
-    */
+void VRManager::ProcessInput(float delta_time, bool flying_enabled)
+{ 
+    // Get one eye's view direction vector (both eyes have same view direction)
+    XrPosef eyePose = views[0].pose;
+    glm::quat orientation(eyePose.orientation.w, eyePose.orientation.x, eyePose.orientation.y, eyePose.orientation.z);
     
     syncActions();
     XrActionStateVector2f joystickState{XR_TYPE_ACTION_STATE_VECTOR2F};
     XrActionStateGetInfo getInfo{XR_TYPE_ACTION_STATE_GET_INFO};
     getInfo.action = m_moveAction;
-    getInfo.subactionPath = XR_NULL_PATH; // O m_leftHandPath si lo separaste
+    getInfo.subactionPath = XR_NULL_PATH;
 
     XrResult result = xrGetActionStateVector2f(m_session, &getInfo, &joystickState);
     if (result != XR_SUCCESS) {
-        std::cout << "Error al obtener estado: " << result << std::endl;
+        std::cout << "ERROR: couldn't read left joystick state: " << result << std::endl;
     }
-    std::cout << "Mando Activo: " << (joystickState.isActive ? "SI" : "NO") 
-          << " | Valores: X=" << joystickState.currentState.x 
-          << " Y=" << joystickState.currentState.y << std::endl;
 
-    glm::vec2 joystickVector(0.0f, 0.0f);
-
-    if (joystickState.isActive && joystickState.changedSinceLastSync == XR_TRUE) {
-        std::cout << "LEYENDO MANDOOOOO" << std::endl;
-        // Aplicamos una pequeña zona muerta (deadzone) para evitar el "drifting"
+    if (joystickState.isActive) {
+        // Apply deadzone to avoid "drifting"
         float x = joystickState.currentState.x;
         float y = joystickState.currentState.y;
         
         if (abs(x) > 0.15f || abs(y) > 0.15f) {
-            joystickVector = glm::vec2(x, y);
+            glm::vec3 moveDir = glm::vec3(x, 0.0f, -y);
+            moveDir = orientation * moveDir;
+            if (flying_enabled)
+            {
+                moveDir.y = 0.0f;
+                moveDir = glm::normalize(moveDir);
+            }
+            virtual_position += moveDir * delta_time;
         }
     }
 
-    glm::vec3 moveDir = glm::vec3(joystickVector.x, 0.0f, -joystickVector.y);
-    moveDir = orientation * moveDir;
-    virtual_position += moveDir * delta_time;
 }
 
 
@@ -408,12 +389,35 @@ void VRManager::syncActions()
     XrActiveActionSet activeActionSet{};
     activeActionSet.actionSet = m_actionSet;
     activeActionSet.subactionPath = XR_NULL_PATH;
-
+    
     XrEventDataBuffer eventBuffer{ XR_TYPE_EVENT_DATA_BUFFER };
-    while (xrPollEvent(m_instance, &eventBuffer) == XR_SUCCESS) {
+    while (xrPollEvent(m_instance, &eventBuffer) == XR_SUCCESS) 
+    {
+    
+        if (eventBuffer.type == XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) 
+        {
+            auto* stateChanged = reinterpret_cast<XrEventDataSessionStateChanged*>(&eventBuffer);
+            XrSessionState currentState = stateChanged->state;
+            
+            if (currentState == XR_SESSION_STATE_READY) 
+            {
+                XrSessionBeginInfo beginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
+                beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+                std::cout << "INFO: Starting session" << std::endl;
+                xrBeginSession(m_session, &beginInfo);
+                m_session_running = true;
+            }
+            else if (currentState == XR_SESSION_STATE_STOPPING) 
+            {
+                std::cout << "INFO: VR Visor stopped the session. Rebooting session..." << std::endl;
+                xrEndSession(m_session);
+                m_session_running = false;
+            }
+        }
+        
         eventBuffer.type = XR_TYPE_EVENT_DATA_BUFFER;
     }
-
+   
     XrActionsSyncInfo syncInfo{XR_TYPE_ACTIONS_SYNC_INFO};
     syncInfo.countActiveActionSets = 1;
     syncInfo.activeActionSets = &activeActionSet;

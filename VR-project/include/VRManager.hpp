@@ -34,6 +34,7 @@ public:
 	std::vector<XrSwapchainImageOpenGLKHR> m_swapchainImages;
 	uint32_t m_visorHeight;
 	uint32_t m_visorWidth;
+	bool m_session_running = false;
 	
 	// Action variables
 	XrActionSet m_actionSet{XR_NULL_HANDLE};
@@ -49,7 +50,7 @@ public:
 	glm::vec3 GetCameraPosition(int eyeIndex);
 	glm::mat4 GetViewMatrix(int eyeIndex);
 	glm::mat4 GetProjectionMatrix(int eyeIndex);
-	void ProcessInput(GLFWwindow* window, float delta_time);
+	void ProcessInput(float delta_time, bool flying_enabled);
 
 private:
 	XrFrameState frameState;

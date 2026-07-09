@@ -129,126 +129,127 @@ void SceneManager::ExecuteRenderLoop()
         _timing.deltaTime = currentFrame - _timing.lastFrame;
         _timing.lastFrame = currentFrame;
 
-        // VR frame initialization
-        // ----------------------
-        uint32_t imageIndex;
-        GLuint openxrTexture;
-        if (_scene_config.vr_enabled)
-        {
-            imageIndex = _vr_manager_ptr->InitFrame();
-            // 1. Obtenemos la textura de OpenGL correspondiente a ese índice
-            // (m_swapchainImages es el vector que rellenaste al crear el swapchain)
-            openxrTexture = _vr_manager_ptr->m_swapchainImages[imageIndex].image;
-            // 4. ¡Listo! Todo lo que dibujes ahora con tu motor caerá en las gafas
-            glViewport(0, 0, _vr_manager_ptr->m_visorWidth, _vr_manager_ptr->m_visorHeight);
 
-        }
-
-
-        // Process Input
+        // Always Process Input
         // -----
-        if (_scene_config.vr_enabled)
+        glfwPollEvents();       // glfw: Poll IO events (keys pressed/released, mouse moved etc.)
+        processInput();
+
+
+        
+        // Always render when VR not enabled OR when VR enabled and Session Running
+        // ------------------------------------------------------------------------
+        if (!_scene_config.vr_enabled || _vr_manager_ptr->m_session_running)
         {
-            _vr_manager_ptr->ProcessInput(_window, _timing.deltaTime);
-        }
-        else
-            processInput();
-
-        // Render
-        // ------
-        Shader& currentShader = shaders.at("main_shader");
-        currentShader.use();
-
-
-        // ---------------------- LIGHT UNIFORMS ---------------------------------
-        // TODO: Encapsulation of light management
-        glm::vec3 lightColor(1.0f);
-
-        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.8f);
-
-        glUniform3f(glGetUniformLocation(currentShader.ID, "light.ambient"),
-            ambientColor.x, ambientColor.y, ambientColor.z);
-        glUniform3f(glGetUniformLocation(currentShader.ID, "light.diffuse"),
-            diffuseColor.x, diffuseColor.y, diffuseColor.z);
-        glUniform3f(glGetUniformLocation(currentShader.ID, "light.specular"), 1.0f, 1.0f, 1.0f);
-
-        glm::vec3 lightPos = glm::vec3(0.0f, 6.0f, 0.0f);
-        glUniform3f(glGetUniformLocation(currentShader.ID, "light.position"),
-            lightPos.x, lightPos.y, lightPos.z);
-
-        glUniform1f(glGetUniformLocation(currentShader.ID, "light.constant"), 1.0f);
-        glUniform1f(glGetUniformLocation(currentShader.ID, "light.linear"), 0.09f);
-        glUniform1f(glGetUniformLocation(currentShader.ID, "light.quadratic"), 0.032f);
-
-
-        // -------- PER EYE RENDER ----------
-        int num_eyes_render = 1;    // In Screen mode we render just one eye (screen mode)
-        if (_scene_config.vr_enabled)
-            num_eyes_render = 2;    // In VR mode we render two eyes
-        for (int eyeIndex = 0; eyeIndex < num_eyes_render; eyeIndex++)
-        {
-            if (_scene_config.vr_enabled)
+            // Initialize frame if VR mode ON
+            uint32_t imageIndex;
+            GLuint openxrTexture;
+            if (_scene_config.vr_enabled && _vr_manager_ptr->m_session_running)
             {
-                // Bind VR FrameBuffer
-                glBindFramebuffer(GL_FRAMEBUFFER, _vr_FBO);
+                imageIndex = _vr_manager_ptr->InitFrame();
+                // Get OpenGL texture from swap chain
+                openxrTexture = _vr_manager_ptr->m_swapchainImages[imageIndex].image;
+                glViewport(0, 0, _vr_manager_ptr->m_visorWidth, _vr_manager_ptr->m_visorHeight);
 
-                // Bind VR Depth FrameBuffer
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _vr_depth_buffer);
-
-                // Bind OpenXR texture to the VR FBO (eyeIndex indicates texture layer: 0 -> left eye / 1 -> right eye)
-                glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, openxrTexture, 0, eyeIndex);
             }
 
-            // Clean screen for current eye
-            glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            // Common Render
+            // ------
+            Shader& currentShader = shaders.at("main_shader");
+            currentShader.use();
 
 
-            // Obtain camera data necessary to render
-            // --------------------------------------
-            glm::vec3 cameraPosition;
-            glm::mat4 projection;
-            glm::mat4 view;
+            // ---------------------- LIGHT UNIFORMS ---------------------------------
+            // TODO: Encapsulation of light management
+            glm::vec3 lightColor(1.0f);
+
+            glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
+            glm::vec3 ambientColor = diffuseColor * glm::vec3(0.8f);
+
+            glUniform3f(glGetUniformLocation(currentShader.ID, "light.ambient"),
+                ambientColor.x, ambientColor.y, ambientColor.z);
+            glUniform3f(glGetUniformLocation(currentShader.ID, "light.diffuse"),
+                diffuseColor.x, diffuseColor.y, diffuseColor.z);
+            glUniform3f(glGetUniformLocation(currentShader.ID, "light.specular"), 1.0f, 1.0f, 1.0f);
+
+            glm::vec3 lightPos = glm::vec3(0.0f, 6.0f, 0.0f);
+            glUniform3f(glGetUniformLocation(currentShader.ID, "light.position"),
+                lightPos.x, lightPos.y, lightPos.z);
+
+            glUniform1f(glGetUniformLocation(currentShader.ID, "light.constant"), 1.0f);
+            glUniform1f(glGetUniformLocation(currentShader.ID, "light.linear"), 0.09f);
+            glUniform1f(glGetUniformLocation(currentShader.ID, "light.quadratic"), 0.032f);
+
+
+            // -------- PER EYE RENDER ----------
+            int num_eyes_render = 1;    // In Screen mode we render just one eye (screen mode)
             if (_scene_config.vr_enabled)
+                num_eyes_render = 2;    // In VR mode we render two eyes
+            for (int eyeIndex = 0; eyeIndex < num_eyes_render; eyeIndex++)
             {
-                cameraPosition = _vr_manager_ptr->GetCameraPosition(eyeIndex);
-                projection = _vr_manager_ptr->GetProjectionMatrix(eyeIndex);
-                view = _vr_manager_ptr->GetViewMatrix(eyeIndex);
+                if (_scene_config.vr_enabled)
+                {
+                    // Bind VR FrameBuffer
+                    glBindFramebuffer(GL_FRAMEBUFFER, _vr_FBO);
+
+                    // Bind VR Depth FrameBuffer
+                    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _vr_depth_buffer);
+
+                    // Bind OpenXR texture to the VR FBO (eyeIndex indicates texture layer: 0 -> left eye / 1 -> right eye)
+                    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, openxrTexture, 0, eyeIndex);
+                }
+
+                // Clean screen for current eye
+                glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+                // Obtain camera data necessary to render
+                // --------------------------------------
+                glm::vec3 cameraPosition;
+                glm::mat4 projection;
+                glm::mat4 view;
+                if (_scene_config.vr_enabled)
+                {
+                    cameraPosition = _vr_manager_ptr->GetCameraPosition(eyeIndex);
+                    projection = _vr_manager_ptr->GetProjectionMatrix(eyeIndex);
+                    view = _vr_manager_ptr->GetViewMatrix(eyeIndex);
+                }
+                else
+                {
+                    cameraPosition = _camera_ptr->Position;
+                    projection = glm::perspective(glm::radians(_camera_ptr->Zoom), (float)_screen.scr_width / (float)_screen.scr_height, 0.1f, 100.0f);
+                    view = _camera_ptr->GetViewMatrix();
+                }
+
+                // View Position in world space (camera position)
+                glUniform3f(glGetUniformLocation(currentShader.ID, "viewPos"), cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+                // View/projection transformations
+                glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "projection"), 1, false, glm::value_ptr(projection));
+                glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "view"), 1, false, glm::value_ptr(view));
+
+                // Render the loaded model
+                // -----------------------
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f)); // translate it down so it's at the center of the scene
+                model = glm::scale(model, glm::vec3(0.25f, 0.25f, 0.25f));	// it's a bit too big for our scene, so scale it down
+                glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
+
+                models.at("main_model").Draw(currentShader);
             }
+
+            // Finish the frame in VR mode or screen mode
+            if (_scene_config.vr_enabled)
+                _vr_manager_ptr->FinishFrame();
             else
-            {
-                cameraPosition = _camera_ptr->Position;
-                projection = glm::perspective(glm::radians(_camera_ptr->Zoom), (float)_screen.scr_width / (float)_screen.scr_height, 0.1f, 100.0f);
-                view = _camera_ptr->GetViewMatrix();
-            }
-
-            // View Position in world space (camera position)
-            glUniform3f(glGetUniformLocation(currentShader.ID, "viewPos"), cameraPosition.x, cameraPosition.y, cameraPosition.z);
-
-            // View/projection transformations
-            glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "projection"), 1, false, glm::value_ptr(projection));
-            glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "view"), 1, false, glm::value_ptr(view));
-
-            // Render the loaded model
-            // -----------------------
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f)); // translate it down so it's at the center of the scene
-            model = glm::scale(model, glm::vec3(0.25f, 0.25f, 0.25f));	// it's a bit too big for our scene, so scale it down
-            glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
-            
-            models.at("main_model").Draw(currentShader);
+                glfwSwapBuffers(_window);
         }
-
-        // Finish the frame in VR mode or screen mode
-        if (_scene_config.vr_enabled)
-            _vr_manager_ptr->FinishFrame();
         else
-            glfwSwapBuffers(_window);
-
-
-        // glfw: Poll IO events (keys pressed/released, mouse moved etc.)
-        glfwPollEvents();
+        {
+            // Sleep the CPU when VR session fininshed sleeping (googles off)
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
 
     }
 
@@ -265,6 +266,13 @@ bool SceneManager::SceneIsValid()
     return _scene_valid;
 }
 
+// Scene configuration
+// -------------------
+void SceneManager::FlyingMode(bool active)
+{
+    _scene_config.flying_enabled = active;
+}
+
 
 
 
@@ -275,15 +283,25 @@ void SceneManager::processInput()
     if (glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(_window, true);
 
-    // Get camera pointer
-    if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
-        _camera_ptr->ProcessKeyboard(Camera::FORWARD, _timing.deltaTime);
-    if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
-        _camera_ptr->ProcessKeyboard(Camera::BACKWARD, _timing.deltaTime);
-    if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
-        _camera_ptr->ProcessKeyboard(Camera::LEFT, _timing.deltaTime);
-    if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
-        _camera_ptr->ProcessKeyboard(Camera::RIGHT, _timing.deltaTime);
+
+    if (_scene_config.vr_enabled)   // If VR mode delegate Input Processing to VR Manager
+    {
+        _vr_manager_ptr->ProcessInput(_timing.deltaTime, _scene_config.flying_enabled);
+    }
+    else    // Otherwise handle keyboard input
+    {
+        // Get camera pointer
+        if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
+            _camera_ptr->ProcessKeyboard(Camera::FORWARD, _timing.deltaTime, _scene_config.flying_enabled);
+        if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
+            _camera_ptr->ProcessKeyboard(Camera::BACKWARD, _timing.deltaTime, _scene_config.flying_enabled);
+        if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
+            _camera_ptr->ProcessKeyboard(Camera::LEFT, _timing.deltaTime, _scene_config.flying_enabled);
+        if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
+            _camera_ptr->ProcessKeyboard(Camera::RIGHT, _timing.deltaTime, _scene_config.flying_enabled);
+
+    }
+
 }
 
 // glfw: Whenever the window size changed (by OS or user resize) this callback function executes

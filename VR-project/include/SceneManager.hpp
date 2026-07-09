@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
+#include <thread>
+#include <chrono>
 
 #define GLFW_EXPOSE_NATIVE_WIN32 
 #define GLFW_EXPOSE_NATIVE_WGL
@@ -42,6 +44,7 @@ struct scene_config_t
 {
 	bool vr_enabled;
 	bool wire_frame_enabled = false;
+	bool flying_enabled = false;
 };
 
 
@@ -72,7 +75,10 @@ public:
 
 	bool SceneIsValid();
 
-public:
+	// Scene configuration manager
+	void FlyingMode(bool active);
+
+private:
 	screen_manager_t _screen;
 	timing_t _timing;
 	scene_config_t _scene_config;
