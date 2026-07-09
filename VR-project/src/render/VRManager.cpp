@@ -4,7 +4,7 @@ VRManager::VRManager(GLFWwindow* glfwWindow)
 {
     // Create Instance (Connect to Loader)
     // -----------------------------------
-    XrInstanceCreateInfo instanceInfo = { XR_TYPE_INSTANCE_CREATE_INFO };
+    XrInstanceCreateInfo instanceInfo{ XR_TYPE_INSTANCE_CREATE_INFO };
     strcpy_s(instanceInfo.applicationInfo.applicationName, XR_MAX_APPLICATION_NAME_SIZE, "ScanDraw VR Viewer");
     instanceInfo.applicationInfo.applicationVersion = 1;
 

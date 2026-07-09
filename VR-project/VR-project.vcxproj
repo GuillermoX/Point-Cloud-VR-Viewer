@@ -34,6 +34,34 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Camera.hpp" />
+    <ClInclude Include="include\extern\CLI\App.hpp" />
+    <ClInclude Include="include\extern\CLI\Argv.hpp" />
+    <ClInclude Include="include\extern\CLI\CLI.hpp" />
+    <ClInclude Include="include\extern\CLI\Config.hpp" />
+    <ClInclude Include="include\extern\CLI\ConfigFwd.hpp" />
+    <ClInclude Include="include\extern\CLI\Encoding.hpp" />
+    <ClInclude Include="include\extern\CLI\Error.hpp" />
+    <ClInclude Include="include\extern\CLI\ExtraValidators.hpp" />
+    <ClInclude Include="include\extern\CLI\Formatter.hpp" />
+    <ClInclude Include="include\extern\CLI\FormatterFwd.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\App_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\Argv_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\Config_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\Encoding_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\ExtraValidators_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\Formatter_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\Option_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\Split_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\StringTools_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\impl\Validators_inl.hpp" />
+    <ClInclude Include="include\extern\CLI\Macros.hpp" />
+    <ClInclude Include="include\extern\CLI\Option.hpp" />
+    <ClInclude Include="include\extern\CLI\Split.hpp" />
+    <ClInclude Include="include\extern\CLI\StringTools.hpp" />
+    <ClInclude Include="include\extern\CLI\Timer.hpp" />
+    <ClInclude Include="include\extern\CLI\TypeTools.hpp" />
+    <ClInclude Include="include\extern\CLI\Validators.hpp" />
+    <ClInclude Include="include\extern\CLI\Version.hpp" />
     <ClInclude Include="include\extern\stb_image.h" />
     <ClInclude Include="include\Mesh.hpp" />
     <ClInclude Include="include\Model.hpp" />
