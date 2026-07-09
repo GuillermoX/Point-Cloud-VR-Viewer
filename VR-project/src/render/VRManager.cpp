@@ -371,7 +371,7 @@ void VRManager::ProcessInput(float delta_time, bool flying_enabled)
         if (abs(x) > 0.15f || abs(y) > 0.15f) {
             glm::vec3 moveDir = glm::vec3(x, 0.0f, -y);
             moveDir = orientation * moveDir;
-            if (flying_enabled)
+            if (!flying_enabled)
             {
                 moveDir.y = 0.0f;
                 moveDir = glm::normalize(moveDir);

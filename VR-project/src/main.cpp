@@ -1,3 +1,5 @@
+#include <extern/CLI/CLI.hpp>
+
 #include <Shader.hpp>
 #include <Model.hpp>
 
@@ -5,10 +7,20 @@
 #include <SceneManager.hpp>
 
 
-int main()
+int main(int argc, char** argv)
 {
-    SceneManager scene_manager(800, 600, true);
-    scene_manager.FlyingMode(true);
+    // Get CLI parameters
+    CLI::App app{"VR Point Cloud Viewer"};
+    bool vr_mode_enabled = false;
+    bool flying_mode_enabled = false;
+
+    app.add_flag("-v,--vr", vr_mode_enabled, "VR Mode enabled");
+    app.add_flag("-f,--flying", flying_mode_enabled, "Flying mode enabled");
+
+    CLI11_PARSE(app, argc, argv);
+
+    SceneManager scene_manager(800, 600, vr_mode_enabled);
+    scene_manager.FlyingMode(flying_mode_enabled);
 
     // Build and compile shaders
     Shader ourShader("assets/shaders/shader.vert", "assets/shaders/shader.frag");

@@ -76,7 +76,7 @@ public:
     {
         glm::vec3 thisFront = Front;
         glm::vec3 thisRight = Right;
-        if (flyingActive)
+        if (!flyingActive)
         {
             thisFront.y = 0.0f;
             thisRight.y = 0.0f;
