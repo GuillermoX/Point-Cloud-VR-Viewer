@@ -22,6 +22,7 @@
 #include "Camera.hpp"
 #include "Shader.hpp"
 #include "Model.hpp"
+#include "PointCloud.hpp"
 #include "VRManager.hpp"
 
 struct screen_manager_t
@@ -53,6 +54,7 @@ class SceneManager
 public:
 	std::unordered_map<std::string, Shader> shaders;
 	std::unordered_map<std::string, Model> models;
+	std::shared_ptr<PointCloud> point_cloud;
 
 	SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled = false);
 	~SceneManager();
@@ -70,6 +72,8 @@ public:
 			  -1 -> error while adding model
 	*/
 	unsigned char AddModel(Model& model, std::string model_id);
+
+	unsigned char AddPointCloud(PointCloud& point_cloud);
 
 	void ExecuteRenderLoop();
 

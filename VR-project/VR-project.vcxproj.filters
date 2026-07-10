@@ -36,11 +36,19 @@
     <ClCompile Include="src\render\SceneManager.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="src\render\LASReader.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\PointCloud.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\shader.frag" />
     <None Include="assets\shaders\shader.vert" />
     <None Include="assets\objects\backpack\backpack.mtl" />
+    <None Include="assets\shaders\point_cloud.vert" />
+    <None Include="assets\shaders\point_cloud.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Camera.hpp">
@@ -146,6 +154,12 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="include\extern\CLI\Version.hpp">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LASReader.hpp">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PointCloud.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

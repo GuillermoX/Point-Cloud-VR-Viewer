@@ -33,3 +33,6 @@ Build/
 bin/
 build/
 obj/
+
+# --- Cloud Points ----
+cloud-points/

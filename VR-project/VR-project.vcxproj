@@ -21,14 +21,18 @@
   <ItemGroup>
     <ClCompile Include="src\extern\glad.c" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\render\LASReader.cpp" />
     <ClCompile Include="src\render\Mesh.cpp" />
     <ClCompile Include="src\render\Model.cpp" />
+    <ClCompile Include="src\render\PointCloud.cpp" />
     <ClCompile Include="src\render\SceneManager.cpp" />
     <ClCompile Include="src\render\Shader.cpp" />
     <ClCompile Include="src\render\VRManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\objects\backpack\backpack.mtl" />
+    <None Include="assets\shaders\point_cloud.frag" />
+    <None Include="assets\shaders\point_cloud.vert" />
     <None Include="assets\shaders\shader.frag" />
     <None Include="assets\shaders\shader.vert" />
   </ItemGroup>
@@ -63,8 +67,10 @@
     <ClInclude Include="include\extern\CLI\Validators.hpp" />
     <ClInclude Include="include\extern\CLI\Version.hpp" />
     <ClInclude Include="include\extern\stb_image.h" />
+    <ClInclude Include="include\LASReader.hpp" />
     <ClInclude Include="include\Mesh.hpp" />
     <ClInclude Include="include\Model.hpp" />
+    <ClInclude Include="include\PointCloud.hpp" />
     <ClInclude Include="include\SceneManager.hpp" />
     <ClInclude Include="include\Shader.hpp" />
     <ClInclude Include="include\VRManager.hpp" />

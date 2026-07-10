@@ -5,6 +5,7 @@
 
 #include <VRManager.hpp>
 #include <SceneManager.hpp>
+#include <PointCloud.hpp>
 
 
 int main(int argc, char** argv)
@@ -19,16 +20,21 @@ int main(int argc, char** argv)
 
     CLI11_PARSE(app, argc, argv);
 
+
     SceneManager scene_manager(800, 600, vr_mode_enabled);
     scene_manager.FlyingMode(flying_mode_enabled);
 
     // Build and compile shaders
-    Shader ourShader("assets/shaders/shader.vert", "assets/shaders/shader.frag");
+    Shader ourShader("assets/shaders/point_cloud.vert", "assets/shaders/point_cloud.frag");
     scene_manager.AddShader(ourShader, "main_shader");
     
     // Load Models
-    Model ourModel("assets/objects/backpack/backpack.obj");
-    scene_manager.AddModel(ourModel, "main_model");
+    /* Model ourModel("assets/objects/backpack/backpack.obj");
+    scene_manager.AddModel(ourModel, "main_model");*/
+
+    // Load Cloud Point
+    PointCloud pointCloud("assets/cloud-points/aula.las", 500000);
+    scene_manager.AddPointCloud(pointCloud);
     
     scene_manager.ExecuteRenderLoop();
    

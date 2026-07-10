@@ -118,6 +118,12 @@ unsigned char SceneManager::AddModel(Model& model, std::string model_id)
     return 0;
 }
 
+unsigned char SceneManager::AddPointCloud(PointCloud& point_cloud)
+{
+    this->point_cloud = std::make_shared<PointCloud>(point_cloud);
+    return 0;
+}
+
 void SceneManager::ExecuteRenderLoop()
 {
  // ----------- RENDER LOOP ------------
@@ -161,7 +167,7 @@ void SceneManager::ExecuteRenderLoop()
 
             // ---------------------- LIGHT UNIFORMS ---------------------------------
             // TODO: Encapsulation of light management
-            glm::vec3 lightColor(1.0f);
+            /*glm::vec3 lightColor(1.0f);
 
             glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
             glm::vec3 ambientColor = diffuseColor * glm::vec3(0.8f);
@@ -178,7 +184,7 @@ void SceneManager::ExecuteRenderLoop()
 
             glUniform1f(glGetUniformLocation(currentShader.ID, "light.constant"), 1.0f);
             glUniform1f(glGetUniformLocation(currentShader.ID, "light.linear"), 0.09f);
-            glUniform1f(glGetUniformLocation(currentShader.ID, "light.quadratic"), 0.032f);
+            glUniform1f(glGetUniformLocation(currentShader.ID, "light.quadratic"), 0.032f);*/
 
 
             // -------- PER EYE RENDER ----------
@@ -223,7 +229,7 @@ void SceneManager::ExecuteRenderLoop()
                 }
 
                 // View Position in world space (camera position)
-                glUniform3f(glGetUniformLocation(currentShader.ID, "viewPos"), cameraPosition.x, cameraPosition.y, cameraPosition.z);
+                //glUniform3f(glGetUniformLocation(currentShader.ID, "viewPos"), cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
                 // View/projection transformations
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "projection"), 1, false, glm::value_ptr(projection));
@@ -233,10 +239,10 @@ void SceneManager::ExecuteRenderLoop()
                 // -----------------------
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f)); // translate it down so it's at the center of the scene
-                model = glm::scale(model, glm::vec3(0.25f, 0.25f, 0.25f));	// it's a bit too big for our scene, so scale it down
+                model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
 
-                models.at("main_model").Draw(currentShader);
+                point_cloud->Draw();
             }
 
             // Finish the frame in VR mode or screen mode
