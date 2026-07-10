@@ -13,6 +13,8 @@ PointCloud::PointCloud(const std::string file_path, size_t max_points)
     } else {
         std::cout << "[RENDER CHECK] ERROR: Vector is EMPTY!" << std::endl;
     }
+
+    setupPointCloud();
 }
 
 
@@ -36,6 +38,9 @@ void PointCloud::setupPointCloud()
 	// Specify how to read Point colors in shader
     glEnableVertexAttribArray(1);	
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(point_data_t), (void*)offsetof(point_data_t, color));
+
+    std::cout << "[VBO DEBUG] Sizeof Vertex Struct: " << sizeof(point_data_t) << " bytes." << std::endl;
+    std::cout << "[VBO DEBUG] Total Buffer Size: " << points.size() * sizeof(point_data_t) << " bytes." << std::endl;
 
     glBindVertexArray(0);	
 }

@@ -67,6 +67,8 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
 
     // Configure global opengl state
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);         // Alpha blending
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
 
     if (_scene_config.vr_enabled)
@@ -185,6 +187,10 @@ void SceneManager::ExecuteRenderLoop()
             glUniform1f(glGetUniformLocation(currentShader.ID, "light.constant"), 1.0f);
             glUniform1f(glGetUniformLocation(currentShader.ID, "light.linear"), 0.09f);
             glUniform1f(glGetUniformLocation(currentShader.ID, "light.quadratic"), 0.032f);*/
+            if(_scene_config.vr_enabled) 
+                glUniform1f(glGetUniformLocation(currentShader.ID, "screenHeight"), _vr_manager_ptr->m_visorHeight);
+            else
+                glUniform1f(glGetUniformLocation(currentShader.ID, "screenHeight"), _screen.scr_height);
 
 
             // -------- PER EYE RENDER ----------
@@ -238,7 +244,7 @@ void SceneManager::ExecuteRenderLoop()
                 // Render the loaded model
                 // -----------------------
                 glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f)); // translate it down so it's at the center of the scene
+                model = glm::translate(model, glm::vec3(0.0f, -1.5f, -2.0f)); // translate it down so it's at the center of the scene
                 model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
 

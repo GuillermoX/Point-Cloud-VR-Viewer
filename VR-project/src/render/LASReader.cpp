@@ -79,8 +79,8 @@ std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, s
         
         // Center the coordinate system around (0, 0, 0) and cast to float
         processedVertex.position[0] = static_cast<float>(real_x - origin_x);
-        processedVertex.position[1] = static_cast<float>(real_y - origin_y);
-        processedVertex.position[2] = static_cast<float>(real_z - origin_z);
+        processedVertex.position[1] = static_cast<float>(real_z - origin_z);
+        processedVertex.position[2] = -(static_cast<float>(real_y - origin_y));
 
         // Normalize color channels from [0, 65535] to [0.0, 1.0] for OpenGL
         processedVertex.color[0] = raw_point.red / 65535.0f;
