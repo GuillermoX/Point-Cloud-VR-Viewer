@@ -69,6 +69,8 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);         // Alpha blending
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Make sure point size is enabled
+	glEnable(GL_PROGRAM_POINT_SIZE);
     
 
     if (_scene_config.vr_enabled)
@@ -248,7 +250,7 @@ void SceneManager::ExecuteRenderLoop()
                 model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
 
-                point_cloud->Draw();
+                point_cloud->Draw(projection * view);
             }
 
             // Finish the frame in VR mode or screen mode
