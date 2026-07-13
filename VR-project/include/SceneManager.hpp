@@ -54,7 +54,7 @@ class SceneManager
 public:
 	std::unordered_map<std::string, Shader> shaders;
 	std::unordered_map<std::string, Model> models;
-	std::shared_ptr<PointCloud> point_cloud;
+	PointCloud* point_cloud;
 
 	SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled = false);
 	~SceneManager();

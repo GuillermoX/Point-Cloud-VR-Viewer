@@ -74,7 +74,7 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
     if (_scene_config.vr_enabled)
     {    
         std::cout << "INFO: ----- VR IS ENABLED -----"  << std::endl;
-        std::cout << "GPU en uso por OpenGL: " << glGetString(GL_RENDERER) << std::endl;
+        std::cout << "GPU in use with OpenGL: " << glGetString(GL_RENDERER) << std::endl;
         _vr_manager_ptr = std::make_unique<VRManager>(_window);
         // 1. Crear el FBO "cascarón"
         // Create FBO
@@ -122,7 +122,7 @@ unsigned char SceneManager::AddModel(Model& model, std::string model_id)
 
 unsigned char SceneManager::AddPointCloud(PointCloud& point_cloud)
 {
-    this->point_cloud = std::make_shared<PointCloud>(point_cloud);
+    this->point_cloud = &point_cloud;
     return 0;
 }
 

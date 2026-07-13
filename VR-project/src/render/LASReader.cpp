@@ -1,8 +1,9 @@
 #include <LASReader.hpp>
 
-std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, size_t max_points)
+std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, size_t max_points, glm::vec3& min, glm::vec3& max)
 {
 	std::vector<point_data_t> vertex_buffer;
+    min, max = { 0,0,0 };
 
     std::ifstream file(file_path, std::ios::binary);
     if (!file.is_open()) {
@@ -44,7 +45,7 @@ std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, s
     size_t total_points_three_quarters = total_points - (total_points / 4);
 
 
-    // 3. Jump to the beginning of point records
+    // Jump to the beginning of point records
     file.seekg(header.offset_to_point_data, std::ios::beg);
 
     // Reserve memory in the vector to avoid re-allocations during the loop
@@ -57,6 +58,15 @@ std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, s
     double origin_x = 0.0;
     double origin_y = 0.0;
     double origin_z = 0.0;
+    
+    // Get bounding box
+    max.x = header.max_x;
+    max.y = header.max_y;
+    max.z = header.max_z;
+
+    min.x = header.min_x;
+    min.y = header.min_y;
+    min.z = header.min_z;
 
     // 4. Point reading loop
     for (size_t i = 0; i < total_points; ++i) {
@@ -83,9 +93,9 @@ std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, s
         processedVertex.position[2] = -(static_cast<float>(real_y - origin_y));
 
         // Normalize color channels from [0, 65535] to [0.0, 1.0] for OpenGL
-        processedVertex.color[0] = raw_point.red / 65535.0f;
-        processedVertex.color[1] = raw_point.green / 65535.0f;
-        processedVertex.color[2] = raw_point.blue / 65535.0f;
+        processedVertex.color[0] = raw_point.red >> 8;
+        processedVertex.color[1] = raw_point.green >> 8;
+        processedVertex.color[2] = raw_point.blue >> 8;
 
         vertex_buffer.push_back(processedVertex);
 

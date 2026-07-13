@@ -3,16 +3,16 @@
 PointCloud::PointCloud(const std::string file_path, size_t max_points)
 {
 	LASReader las_reader;
-	points = las_reader.loadLASFile(file_path, max_points);
+    glm::vec3 min, max;
+	points = las_reader.loadLASFile(file_path, max_points, min, max);
 	if (!points.empty()) {
-        std::cout << "[RENDER CHECK] Second vertex pos: (" 
-                  << points[1].position[0] << ", "
-                  << points[1].position[1] << ", "
-                  << points[1].position[2] << ")" << std::endl;
         std::cout << "[RENDER CHECK] Total vertices in vector: " << points.size() << std::endl;
     } else {
         std::cout << "[RENDER CHECK] ERROR: Vector is EMPTY!" << std::endl;
     }
+    
+    std::cout << "Min: (" << min.x << "," << min.y << "," << min.z << ")" << std::endl;
+    std::cout << "Max: (" << max.x << "," << max.y << "," << max.z << ")" << std::endl;
 
     setupPointCloud();
 }
@@ -37,10 +37,10 @@ void PointCloud::setupPointCloud()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(point_data_t), (void*)0);
 	// Specify how to read Point colors in shader
     glEnableVertexAttribArray(1);	
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(point_data_t), (void*)offsetof(point_data_t, color));
+    glVertexAttribPointer(1, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(point_data_t), (void*)offsetof(point_data_t, color));
 
     std::cout << "[VBO DEBUG] Sizeof Vertex Struct: " << sizeof(point_data_t) << " bytes." << std::endl;
-    std::cout << "[VBO DEBUG] Total Buffer Size: " << points.size() * sizeof(point_data_t) << " bytes." << std::endl;
+    std::cout << "[VBO DEBUG] Total Buffer Size: " << (points.size() * sizeof(point_data_t) >> 20) << " Mbytes." << std::endl;
 
     glBindVertexArray(0);	
 }

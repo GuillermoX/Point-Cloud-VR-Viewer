@@ -7,6 +7,8 @@
 #include <fstream>
 #include <vector>
 
+#include <glm/glm.hpp>
+
 #pragma pack(push, 1)
 struct LASHeader {
     char     file_signature[4];       // Siempre tiene que ser "LASF"
@@ -71,14 +73,14 @@ struct LASPointRecord2 {
 struct point_data_t
 {
     float position[3];
-    float color[3];
+    uint8_t color[3];
 };
 
 
 class LASReader
 {
 public:
-    std::vector<point_data_t> loadLASFile(const std::string& path, size_t max_points = 0);
+    std::vector<point_data_t> loadLASFile(const std::string& path, size_t max_points, glm::vec3& min, glm::vec3& max);
 };
 
 

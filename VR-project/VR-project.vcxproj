@@ -24,6 +24,7 @@
     <ClCompile Include="src\render\LASReader.cpp" />
     <ClCompile Include="src\render\Mesh.cpp" />
     <ClCompile Include="src\render\Model.cpp" />
+    <ClCompile Include="src\render\Octree.cpp" />
     <ClCompile Include="src\render\PointCloud.cpp" />
     <ClCompile Include="src\render\SceneManager.cpp" />
     <ClCompile Include="src\render\Shader.cpp" />
@@ -70,6 +71,7 @@
     <ClInclude Include="include\LASReader.hpp" />
     <ClInclude Include="include\Mesh.hpp" />
     <ClInclude Include="include\Model.hpp" />
+    <ClInclude Include="include\Octree.hpp" />
     <ClInclude Include="include\PointCloud.hpp" />
     <ClInclude Include="include\SceneManager.hpp" />
     <ClInclude Include="include\Shader.hpp" />
