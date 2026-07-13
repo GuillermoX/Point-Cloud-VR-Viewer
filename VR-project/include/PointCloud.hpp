@@ -18,6 +18,7 @@ public:
 	
 	PointCloud(const std::string file_path, size_t max_points);
 	void Draw(const glm::mat4& view_proj);
+	void Debug(const glm::mat4& vpm);
 
 private:
 	unsigned int VAO, VBO;

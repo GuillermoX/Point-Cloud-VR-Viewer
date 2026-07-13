@@ -32,6 +32,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\objects\backpack\backpack.mtl" />
+    <None Include="assets\shaders\debug.frag" />
+    <None Include="assets\shaders\debug.vert" />
     <None Include="assets\shaders\point_cloud.frag" />
     <None Include="assets\shaders\point_cloud.vert" />
     <None Include="assets\shaders\shader.frag" />

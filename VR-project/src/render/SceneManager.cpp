@@ -166,7 +166,6 @@ void SceneManager::ExecuteRenderLoop()
             // Common Render
             // ------
             Shader& currentShader = shaders.at("main_shader");
-            currentShader.use();
 
 
             // ---------------------- LIGHT UNIFORMS ---------------------------------
@@ -201,6 +200,7 @@ void SceneManager::ExecuteRenderLoop()
                 num_eyes_render = 2;    // In VR mode we render two eyes
             for (int eyeIndex = 0; eyeIndex < num_eyes_render; eyeIndex++)
             {
+                currentShader.use();
                 if (_scene_config.vr_enabled)
                 {
                     // Bind VR FrameBuffer
@@ -249,8 +249,10 @@ void SceneManager::ExecuteRenderLoop()
                 model = glm::translate(model, glm::vec3(0.0f, -1.5f, -2.0f)); // translate it down so it's at the center of the scene
                 model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
-
-                point_cloud->Draw(projection * view);
+    
+                glm::mat4 vpm = projection * view * model;
+                //point_cloud->Draw(vpm);
+                point_cloud->Debug(vpm);
             }
 
             // Finish the frame in VR mode or screen mode

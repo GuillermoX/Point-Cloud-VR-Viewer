@@ -15,6 +15,8 @@ PointCloud::PointCloud(const std::string file_path, size_t max_points)
     std::cout << "Max: (" << max.x << "," << max.y << "," << max.z << ")" << std::endl;
 
     octree_ptr = std::make_unique<Octree>(points, min, max);
+
+
     
 }
 
@@ -22,4 +24,9 @@ PointCloud::PointCloud(const std::string file_path, size_t max_points)
 void PointCloud::Draw(const glm::mat4& view_proj)
 {
     octree_ptr->Draw(view_proj);
+}
+
+void PointCloud::Debug(const glm::mat4& vpm)
+{
+    octree_ptr->Debug(vpm); 
 }

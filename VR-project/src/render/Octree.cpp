@@ -27,7 +27,67 @@ Octree::Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max
 
 void Octree::Draw(const glm::mat4& view_proj)
 {
-	_root_node->Draw(view_proj);
+	plane_t planes[6];
+	getFrustrumPlanes(view_proj, planes);
+	_root_node->Draw(planes);
+}
+
+void Octree::Debug(const glm::mat4& vpm)
+{
+	_root_node->debug_shader->use();
+    glUniformMatrix4fv(glGetUniformLocation(_root_node->debug_shader->ID, "vpm"), 1, false, glm::value_ptr(vpm));
+	plane_t planes[6];
+	getFrustrumPlanes(vpm, planes);
+	_root_node->Debug(planes, vpm);
+}
+
+
+void Octree::getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6])
+{
+
+	// Right plane
+	planes[0].normal.x = vp[0][3] - vp[0][0];
+	planes[0].normal.y = vp[1][3] - vp[1][0];
+	planes[0].normal.z = vp[2][3] - vp[2][0];
+	planes[0].d = vp[3][3] - vp[3][0];
+
+	// Left plane
+	planes[1].normal.x = vp[0][3] + vp[0][0];
+	planes[1].normal.y = vp[1][3] + vp[1][0];
+	planes[1].normal.z = vp[2][3] + vp[2][0];
+	planes[1].d = vp[3][3] + vp[3][0];
+
+	// Bottom plane
+	planes[2].normal.x = vp[0][3] + vp[0][1];
+	planes[2].normal.y = vp[1][3] + vp[1][1];
+	planes[2].normal.z = vp[2][3] + vp[2][1];
+	planes[2].d = vp[3][3] + vp[3][1];
+
+	// Top plane
+	planes[3].normal.x = vp[0][3] - vp[0][1];
+	planes[3].normal.y = vp[1][3] - vp[1][1];
+	planes[3].normal.z = vp[2][3] - vp[2][1];
+	planes[3].d = vp[3][3] - vp[3][1];
+
+	// Far plane
+	planes[4].normal.x = vp[0][3] - vp[0][2];
+	planes[4].normal.y = vp[1][3] - vp[1][2];
+	planes[4].normal.z = vp[2][3] - vp[2][2];
+	planes[4].d = vp[3][3] - vp[3][2];
+
+	// Near plane
+	planes[5].normal.x = vp[0][3] + vp[0][2];
+	planes[5].normal.y = vp[1][3] + vp[1][2];
+	planes[5].normal.z = vp[2][3] + vp[2][2];
+	planes[5].d = vp[3][3] + vp[3][2];
+	
+	// Normalize planes
+	for (int i = 0; i < 6; i++) {
+		float lenght = glm::length(planes[i].normal);
+		planes[i].normal /= lenght;
+		planes[i].d /= lenght;
+	}
+
 }
 
 // ----------- OctreeNode -------------------
@@ -41,26 +101,27 @@ OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned int max_
 OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, unsigned int max_points)
 	: _max_points(max_points)
 {
+	float quarter_node_size = half_node_size * 0.5;
 	if (index == 0)
-		_center = center + glm::vec3(-half_node_size);
+		_center = center + glm::vec3(-quarter_node_size);
 	else if (index == 1)
-		_center = center + glm::vec3(half_node_size, -half_node_size, -half_node_size);
+		_center = center + glm::vec3(quarter_node_size, -quarter_node_size, -quarter_node_size);
 	else if (index == 2)
-		_center = center + glm::vec3(-half_node_size, half_node_size, -half_node_size);
+		_center = center + glm::vec3(-quarter_node_size, quarter_node_size, -quarter_node_size);
 	else if (index == 3)
-		_center = center + glm::vec3(half_node_size, half_node_size, -half_node_size);
+		_center = center + glm::vec3(quarter_node_size, quarter_node_size, -quarter_node_size);
 	else if (index == 4)
-		_center = center + glm::vec3(-half_node_size, -half_node_size, half_node_size);
+		_center = center + glm::vec3(-quarter_node_size, -quarter_node_size, quarter_node_size);
 	else if (index == 5)
-		_center = center + glm::vec3(half_node_size, -half_node_size, half_node_size);
+		_center = center + glm::vec3(quarter_node_size, -quarter_node_size, quarter_node_size);
 	else if (index == 6)
-		_center = center + glm::vec3(-half_node_size, half_node_size, -half_node_size);
+		_center = center + glm::vec3(-quarter_node_size, quarter_node_size, -quarter_node_size);
 	else if (index == 7)
-		_center = center + glm::vec3(half_node_size);
+		_center = center + glm::vec3(quarter_node_size);
 	else
 		_center = center;
 
-	_half_node_size = half_node_size / 2;
+	_half_node_size = quarter_node_size;
 	
 }
 
@@ -81,9 +142,9 @@ void OctreeNode::AddPoint(point_data_t& point)
 }
 
 
-void OctreeNode::Draw(const glm::mat4& view_proj)
+void OctreeNode::Draw(plane_t planes[6])
 {
-	if (isInsideFrustrum(view_proj))
+	if (isInsideFrustrum(planes))
 	{	
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_POINTS, 0, _points.size());
@@ -91,10 +152,33 @@ void OctreeNode::Draw(const glm::mat4& view_proj)
 		for (int i = 0; i < 8; i++)
 		{
 			if (_subnodes[i] != nullptr)
-				_subnodes[i]->Draw(view_proj);
+				_subnodes[i]->Draw(planes);
 		}
 	}
+}
 
+void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm)
+{
+	if (isInsideFrustrum(planes))
+		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 0.0, 1.0, 0.0);
+	else
+		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 1.0, 0.0, 0.0);
+
+	glm::mat4 insideModel = glm::mat4(1.0f);
+	insideModel = glm::translate(insideModel, _center);
+	insideModel = glm::scale(insideModel, glm::vec3(_half_node_size * 2.0f));
+	glUniformMatrix4fv(glGetUniformLocation(debug_shader->ID, "insideModel"), 1, false, glm::value_ptr(insideModel));
+
+	glBindVertexArray(debug_VAO);
+	glDrawArrays(GL_LINES, 0, 24); // 24 vértices para el cubo de líneas
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	
+	for (int i = 0; i < 8; i++)
+	{
+		if (_subnodes[i] != nullptr)
+			_subnodes[i]->Debug(planes, vpm);
+	}
 
 }
 
@@ -127,7 +211,45 @@ void OctreeNode::InitGraphicBuffers()
 		if (_subnodes[i] != nullptr)
 			_subnodes[i]->InitGraphicBuffers();
 	}
-		
+	
+	// DEBUG
+	glGenVertexArrays(1, &debug_VAO);
+	glGenBuffers(1, &debug_VBO);
+
+	glBindVertexArray(debug_VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, debug_VBO);
+	
+	// 24 vértices (x, y, z) que forman las 12 líneas de la caja
+	const float wireframeCubeVertices[] = {
+		// Cara inferior (Y = -0.5)
+		-0.5f, -0.5f, -0.5f,  0.5f, -0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,  0.5f, -0.5f,  0.5f,
+		 0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f, -0.5f, -0.5f, -0.5f,
+		// Cara superior (Y = 0.5)
+		-0.5f,  0.5f, -0.5f,  0.5f,  0.5f, -0.5f,
+		 0.5f,  0.5f, -0.5f,  0.5f,  0.5f,  0.5f,
+		 0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,
+		-0.5f,  0.5f,  0.5f, -0.5f,  0.5f, -0.5f,
+		// Pilares verticales que unen ambas caras
+		-0.5f, -0.5f, -0.5f, -0.5f,  0.5f, -0.5f,
+		 0.5f, -0.5f, -0.5f,  0.5f,  0.5f, -0.5f,
+		 0.5f, -0.5f,  0.5f,  0.5f,  0.5f,  0.5f,
+		-0.5f, -0.5f,  0.5f, -0.5f,  0.5f,  0.5f
+	};
+
+	// Load point data to VBO
+    glBufferData(GL_ARRAY_BUFFER, _points.size() * sizeof(point_data_t), _points.data(), GL_STATIC_DRAW);
+	// Usamos el de líneas (Opción 1)
+    glBufferData(GL_ARRAY_BUFFER, sizeof(wireframeCubeVertices), wireframeCubeVertices, GL_STATIC_DRAW);
+	// Atributo 0: Posición (x, y, z)
+    glEnableVertexAttribArray(0);	
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+	debug_shader = std::make_unique<Shader>("assets/shaders/debug.vert", "assets/shaders/debug.frag");
 	
 }
 
@@ -151,45 +273,24 @@ void OctreeNode::addToSubnode(point_data_t& point)
 	_subnodes[index]->AddPoint(point);
 }
 
-bool OctreeNode::isInsideFrustrum(glm::mat4& vp)
-{
-	plane_t planes[6];
+bool OctreeNode::isInsideFrustrum(plane_t planes[6])
+{	
+	for (int i = 0; i < 6; i++) {
+		plane_t plane = planes[i];
 
-	// Right plane
-	planes[0].x = vp[0][3] - vp[0][0];
-	planes[0].y = vp[1][3] - vp[1][0];
-	planes[0].z = vp[2][3] - vp[2][0];
-	planes[0].d = vp[3][3] - vp[3][0];
+		// Find point of node nearest to the plane
+		glm::vec3 p = _center;
+		if (plane.normal.x >= 0) p.x += _half_node_size; else p.x -= _half_node_size;
+		if (plane.normal.y >= 0) p.y += _half_node_size; else p.y -= _half_node_size;
+		if (plane.normal.z >= 0) p.z += _half_node_size; else p.z -= _half_node_size;
 
-	// Left plane
-	planes[1].x = vp[0][3] + vp[0][0];
-	planes[1].y = vp[1][3] + vp[1][0];
-	planes[1].z = vp[2][3] + vp[2][0];
-	planes[1].d = vp[3][3] + vp[3][0];
-
-	// Bottom plane
-	planes[2].x = vp[0][3] + vp[0][1];
-	planes[2].y = vp[1][3] + vp[1][1];
-	planes[2].z = vp[2][3] + vp[2][1];
-	planes[2].d = vp[3][3] + vp[3][1];
-
-	// Top plane
-	planes[3].x = vp[0][3] - vp[0][1];
-	planes[3].y = vp[1][3] - vp[1][1];
-	planes[3].z = vp[2][3] - vp[2][1];
-	planes[3].d = vp[3][3] - vp[3][1];
-
-	// Far plane
-	planes[4].x = vp[0][3] - vp[0][2];
-	planes[4].y = vp[1][3] - vp[1][2];
-	planes[4].z = vp[2][3] - vp[2][2];
-	planes[4].d = vp[3][3] - vp[3][2];
-
-	// Near plane
-	planes[5].x = vp[0][3] + vp[0][2];
-	planes[5].y = vp[1][3] + vp[1][2];
-	planes[5].z = vp[2][3] + vp[2][2];
-	planes[5].d = vp[3][3] + vp[3][2];
+		// If the nearest point of the plane is behind the plane the whole node box is out
+		if (plane.getDistance(p) < 0) {
+			return false;
+		}
+	}
+	
+	return true;
 }
 
 

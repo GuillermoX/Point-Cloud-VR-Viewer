@@ -61,12 +61,12 @@ std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, s
     
     // Get bounding box
     max.x = header.max_x;
-    max.y = header.max_y;
-    max.z = header.max_z;
+    max.y = header.max_z;
+    max.z = -header.max_y;
 
     min.x = header.min_x;
-    min.y = header.min_y;
-    min.z = header.min_z;
+    min.y = header.min_z;
+    min.z = -header.min_y;
 
     // 4. Point reading loop
     for (size_t i = 0; i < total_points; ++i) {
