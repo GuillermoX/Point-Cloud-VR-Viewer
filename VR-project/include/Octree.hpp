@@ -11,7 +11,7 @@
 #include "LASReader.hpp"
 #include "Shader.hpp"
 
-// Support struct for support calculus
+// -------------------- Support Struct for Frustrum Culling -------------------
 struct plane_t
 {
 	glm::vec3 normal;
@@ -22,17 +22,54 @@ struct plane_t
         return glm::dot(normal, point) + d;
 	}
 };
+
+// --------------------- Support Class for Uniform Grid ---------------------
+struct GridKey {
+    int x, y, z;
+
+	// Equality operator to use in std::unordered_map
+    bool operator==(const GridKey& other) const {
+        return x == other.x && y == other.y && z == other.z;
+    }
+};
+
+// Simple hash function
+struct GridKeyHash {
+	// Object Function
+    std::size_t operator()(const GridKey& k) const {
+        return ((k.x * 73856093) ^ (k.y * 19349663) ^ (k.z * 83492791));
+    }
+};
+
+// Support class for uniform grid
+class Grid {
+public:
+	size_t num_points;
+
+	Grid(float cell_size);
+	bool AddPoint(const point_data_t& point);
+	// Moves all points to plain vector struct and deletes all hash_map data (only stores number of points)
+	void PrepareToRender(std::vector<point_data_t>& vector);
+	size_t size();
+	float GetCellSize();
+
+private:
+	float _cell_size;
+	std::unordered_map<GridKey, point_data_t, GridKeyHash> hash_map;
+};
 	
+
+// -------------------------- Octree main classes --------------------------
 
 class OctreeNode
 {
 public:
 	std::unique_ptr<Shader> debug_shader;
 	// Constructor that just copies center and half_node_size
-	OctreeNode(glm::vec3 center, float half_node_size, unsigned int max_points = 50000);
+	OctreeNode(glm::vec3 center, float half_node_size, float cell_size = 0.2f);
 
 	// Constructor that creates Octree Node 
-	OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, unsigned int max_points = 50000);
+	OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, float cell_size = 0.2f);
 
 	~OctreeNode();
 
@@ -44,8 +81,7 @@ public:
 private:
 	glm::vec3 _center;
 	float _half_node_size;
-	std::vector<point_data_t> _points;
-	unsigned int _max_points;
+	Grid _grid;
 	
 	std::unique_ptr<OctreeNode> _subnodes[8];
 
@@ -62,7 +98,7 @@ private:
 class Octree
 {
 public:
-	Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max);
+	Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, float cell_size);
 	void AddPoint(point_data_t& point);
 	void Draw(const glm::mat4& view_proj);
 	void Debug(const glm::mat4& vpm);
@@ -70,6 +106,7 @@ private:
 	std::unique_ptr<OctreeNode> _root_node;	
 	void getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6]);
 };
+
 
 
 

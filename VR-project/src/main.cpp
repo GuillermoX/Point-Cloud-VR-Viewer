@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     scene_manager.AddModel(ourModel, "main_model");*/
 
     // Load Cloud Point
-    PointCloud pointCloud("assets/cloud-points/aula.las", max_points);
+    PointCloud pointCloud("assets/cloud-points/aula.las", max_points, 0.08f);
     scene_manager.AddPointCloud(pointCloud);
     
     scene_manager.ExecuteRenderLoop();

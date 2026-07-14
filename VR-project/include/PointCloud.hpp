@@ -16,7 +16,7 @@ public:
 	std::vector<point_data_t> points;
 	std::unique_ptr<Octree> octree_ptr;
 	
-	PointCloud(const std::string file_path, size_t max_points);
+	PointCloud(const std::string file_path, size_t max_points, float cell_size = 0.2f);
 	void Draw(const glm::mat4& view_proj);
 	void Debug(const glm::mat4& vpm);
 
