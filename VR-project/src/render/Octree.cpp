@@ -90,6 +90,7 @@ void Octree::getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6])
 
 }
 
+
 // ----------- OctreeNode -------------------
 
 OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned int max_points)
@@ -115,7 +116,7 @@ OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char ind
 	else if (index == 5)
 		_center = center + glm::vec3(quarter_node_size, -quarter_node_size, quarter_node_size);
 	else if (index == 6)
-		_center = center + glm::vec3(-quarter_node_size, quarter_node_size, -quarter_node_size);
+		_center = center + glm::vec3(-quarter_node_size, quarter_node_size, quarter_node_size);
 	else if (index == 7)
 		_center = center + glm::vec3(quarter_node_size);
 	else
@@ -179,7 +180,6 @@ void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm)
 		if (_subnodes[i] != nullptr)
 			_subnodes[i]->Debug(planes, vpm);
 	}
-
 }
 
 void OctreeNode::InitGraphicBuffers()
@@ -238,8 +238,6 @@ void OctreeNode::InitGraphicBuffers()
 		-0.5f, -0.5f,  0.5f, -0.5f,  0.5f,  0.5f
 	};
 
-	// Load point data to VBO
-    glBufferData(GL_ARRAY_BUFFER, _points.size() * sizeof(point_data_t), _points.data(), GL_STATIC_DRAW);
 	// Usamos el de líneas (Opción 1)
     glBufferData(GL_ARRAY_BUFFER, sizeof(wireframeCubeVertices), wireframeCubeVertices, GL_STATIC_DRAW);
 	// Atributo 0: Posición (x, y, z)

@@ -188,10 +188,6 @@ void SceneManager::ExecuteRenderLoop()
             glUniform1f(glGetUniformLocation(currentShader.ID, "light.constant"), 1.0f);
             glUniform1f(glGetUniformLocation(currentShader.ID, "light.linear"), 0.09f);
             glUniform1f(glGetUniformLocation(currentShader.ID, "light.quadratic"), 0.032f);*/
-            if(_scene_config.vr_enabled) 
-                glUniform1f(glGetUniformLocation(currentShader.ID, "screenHeight"), _vr_manager_ptr->m_visorHeight);
-            else
-                glUniform1f(glGetUniformLocation(currentShader.ID, "screenHeight"), _screen.scr_height);
 
 
             // -------- PER EYE RENDER ----------
@@ -201,6 +197,11 @@ void SceneManager::ExecuteRenderLoop()
             for (int eyeIndex = 0; eyeIndex < num_eyes_render; eyeIndex++)
             {
                 currentShader.use();
+				if(_scene_config.vr_enabled) 
+					glUniform1f(glGetUniformLocation(currentShader.ID, "screenHeight"), _vr_manager_ptr->m_visorHeight);
+				else
+					glUniform1f(glGetUniformLocation(currentShader.ID, "screenHeight"), _screen.scr_height);
+
                 if (_scene_config.vr_enabled)
                 {
                     // Bind VR FrameBuffer
@@ -247,11 +248,11 @@ void SceneManager::ExecuteRenderLoop()
                 // -----------------------
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(0.0f, -1.5f, -2.0f)); // translate it down so it's at the center of the scene
-                model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+                //model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
     
                 glm::mat4 vpm = projection * view * model;
-                //point_cloud->Draw(vpm);
+                point_cloud->Draw(vpm);
                 point_cloud->Debug(vpm);
             }
 
