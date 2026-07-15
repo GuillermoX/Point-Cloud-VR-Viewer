@@ -35,11 +35,11 @@ Octree::Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max
 	_root_node->InitGraphicBuffers();
 }
 
-void Octree::Draw(const glm::mat4& view_proj)
+void Octree::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos)
 {
 	plane_t planes[6];
 	getFrustrumPlanes(view_proj, planes);
-	_root_node->Draw(planes);
+	_root_node->Draw(planes, camera_pos);
 }
 
 void Octree::Debug(const glm::mat4& vpm)
@@ -104,13 +104,13 @@ void Octree::getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6])
 // ----------- OctreeNode -------------------
 
 OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned int grid_res, unsigned int level)
-	: _center(center), _half_node_size(half_node_size), _level(level)
+	: _num_points(0), _center(center), _half_node_size(half_node_size), _level(level)
 {
 	_grid_ptr = std::make_unique<Grid>(grid_res, (_half_node_size * 2.0) / (float)grid_res, _center - glm::vec3(half_node_size));
 }
 
 OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, unsigned int grid_res, unsigned int level)
-	: _level(level)
+	: _num_points(0), _level(level)
 {
 	float quarter_node_size = half_node_size * 0.5;
 	if (index == 0)
@@ -135,8 +135,6 @@ OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char ind
 	_half_node_size = quarter_node_size;	
 
 	_grid_ptr = std::make_unique<Grid>(grid_res, (_half_node_size * 2.0) / (float)grid_res, _center - glm::vec3(half_node_size));
-
-	//std::cout << "[OCTREE NODE | INFO] Created octree node level: " << _level << std::endl;
 }
 
 OctreeNode::~OctreeNode()
@@ -150,24 +148,28 @@ OctreeNode::~OctreeNode()
 void OctreeNode::AddPoint(point_data_t& point)
 {
 	// Try adding point, if not possible delegate to subnode
-	if (!_grid_ptr->AddPoint(point, _level))
+	// Limit the maximum level of depth of subnodes
+	if (_grid_ptr->FreeGridCell(point) || _level >= 4)
 	{
-		addToSubnode(point);
+		_points.push_back(point);
+		_num_points++;
 	}
+	else	
+		addToSubnode(point);
 }
 
 
-void OctreeNode::Draw(plane_t planes[6])
+void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
 {
-	if (isInsideFrustrum(planes))
+	if (isInsideFrustrum(planes) && levelOfDetail(camera_pos))
 	{	
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_POINTS, 0, _grid_ptr->num_points);
+		glDrawArrays(GL_POINTS, 0, _num_points);
 		glBindVertexArray(0);
 		for (int i = 0; i < 8; i++)
 		{
 			if (_subnodes[i] != nullptr)
-				_subnodes[i]->Draw(planes);
+				_subnodes[i]->Draw(planes, camera_pos);
 		}
 	}
 }
@@ -198,16 +200,17 @@ void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm)
 
 void OctreeNode::InitGraphicBuffers()
 {
+	_grid_ptr->DeleteData();		// Delete grid control arrays
+
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	
-	std::vector<point_data_t>& points_vector = _grid_ptr->GetPointVector();
 
 	// Load point data to VBO
-    glBufferData(GL_ARRAY_BUFFER, points_vector.size() * sizeof(point_data_t), points_vector.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _points.size() * sizeof(point_data_t), _points.data(), GL_STATIC_DRAW);
 
 
 	// Specify how to read Point coords in shader
@@ -218,11 +221,10 @@ void OctreeNode::InitGraphicBuffers()
     glVertexAttribPointer(1, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(point_data_t), (void*)offsetof(point_data_t, color));
 
     std::cout << "[VBO DEBUG] Sizeof Vertex Struct: " << sizeof(point_data_t) << " bytes." << std::endl;
-    std::cout << "[VBO DEBUG] Total Buffer Size: " << (points_vector.size() * sizeof(point_data_t) / 1024.0f) << " Kbytes." << std::endl;
+    std::cout << "[VBO DEBUG] Total Buffer Size: " << (_points.size() * sizeof(point_data_t) / 1024.0f) << " Kbytes." << std::endl;
 
     glBindVertexArray(0);	
 
-	_grid_ptr->DeleteData();		// Delete vector data since it has already been stored into RAM
 	
 	// Init all buffers of active subnodes
 	for (int i = 0; i < 8; i++)
@@ -311,16 +313,31 @@ bool OctreeNode::isInsideFrustrum(plane_t planes[6])
 }
 
 
+bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
+{
+	float distance = glm::distance(camera_pos, _center);
+	unsigned int max_level;
+	if (distance <= 2.0f)
+		max_level = 4;
+	else if (distance <= 5.0f)
+		max_level = 3;
+	else
+		max_level = 2;
+
+	return _level <= max_level;
+}
+
+
 
 // --------------- Support class: Grid -----------------------
 
 Grid::Grid(unsigned int grid_res, float cell_size, glm::vec3 min)
-	: num_points(0), _grid_control(grid_res* grid_res* grid_res, false), _grid_res(grid_res), 
+	: _grid_control(grid_res* grid_res* grid_res, false), _grid_res(grid_res), 
 	  _cell_size(cell_size), _min(min)
 {
 }
 
-bool Grid::AddPoint(const point_data_t& point, unsigned int level)
+bool Grid::FreeGridCell(const point_data_t& point)
 {
 	int cellX = std::clamp((int)((point.position[0] - _min.x) / _cell_size), 0, (int)(_grid_res - 1));
 	int cellY = std::clamp((int)((point.position[1] - _min.y) / _cell_size), 0, (int)(_grid_res - 1));
@@ -328,12 +345,9 @@ bool Grid::AddPoint(const point_data_t& point, unsigned int level)
 
 	int idx = cellX + (cellY * _grid_res) + (cellZ * _grid_res * _grid_res);
 
-	if (!_grid_control[idx] || level >= 3) 
+	if (!_grid_control[idx]) 
 	{
 		_grid_control[idx] = true;
-		_points.push_back(point);
-		num_points++;
-
 		return true;
 	} 
 	else 
@@ -347,12 +361,7 @@ unsigned int Grid::GetGridResolution()
 
 void Grid::DeleteData()
 {
-	_points.clear();
 	_grid_control.clear();
 }
 
-std::vector<point_data_t>& Grid::GetPointVector()
-{
-	return _points;
-}
 

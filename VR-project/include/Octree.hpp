@@ -46,13 +46,9 @@ struct GridKeyHash {
 // Support class for uniform grid
 class Grid {
 public:
-	size_t num_points;
-
 	Grid(unsigned int grid_res, float cell_size, glm::vec3 min);
-	bool AddPoint(const point_data_t& point, unsigned int level);
-	size_t size();
+	bool FreeGridCell(const point_data_t& point);
 	unsigned int GetGridResolution();
-	std::vector<point_data_t>& GetPointVector();
 	void DeleteData();	// Deletes all RAM data (since it has already been loaded to GPU RAM)
 
 private:
@@ -60,7 +56,6 @@ private:
 	float _cell_size;
 	glm::vec3 _min;
 	std::vector<bool> _grid_control;
-	std::vector<point_data_t> _points;
 };
 	
 
@@ -80,22 +75,25 @@ public:
 
 	void AddPoint(point_data_t& point);
 	void InitGraphicBuffers();
-	void Draw(plane_t planes[6]);
+	void Draw(plane_t planes[6], glm::vec3 camera_pos);
 	void Debug(plane_t planes[6], const glm::mat4& vpm);
 
 private:
 	glm::vec3 _center;
 	float _half_node_size;
 	std::unique_ptr<Grid> _grid_ptr;
+	std::vector<point_data_t> _points;
 	unsigned int _level;
 	
 	std::unique_ptr<OctreeNode> _subnodes[8];
 
 	unsigned int VBO, VAO;
+	size_t _num_points;		// Number of points in GPU Buffer
 	unsigned int debug_VBO, debug_VAO;
 
 	void addToSubnode(point_data_t& point);
 	bool isInsideFrustrum(plane_t planes[6]);
+	bool levelOfDetail(glm::vec3 camera_pos);
 
 };
 
@@ -106,7 +104,7 @@ class Octree
 public:
 	Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, unsigned int grid_res);
 	void AddPoint(point_data_t& point);
-	void Draw(const glm::mat4& view_proj);
+	void Draw(const glm::mat4& view_proj, glm::vec3 camera_pos);
 	void Debug(const glm::mat4& vpm);
 private:
 	std::unique_ptr<OctreeNode> _root_node;	

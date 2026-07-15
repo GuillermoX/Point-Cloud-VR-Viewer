@@ -248,12 +248,12 @@ void SceneManager::ExecuteRenderLoop()
                 // -----------------------
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(0.0f, -1.5f, -2.0f)); // translate it down so it's at the center of the scene
-                //model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+                model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
     
                 glm::mat4 vpm = projection * view * model;
-                point_cloud->Draw(vpm);
-                point_cloud->Debug(vpm);
+                point_cloud->Draw(vpm, model * glm::vec4(cameraPosition, 1.0));
+                //point_cloud->Debug(vpm);
             }
 
             // Finish the frame in VR mode or screen mode

@@ -17,9 +17,9 @@ PointCloud::PointCloud(const std::string file_path, size_t max_points, unsigned 
     octree_ptr = std::make_unique<Octree>(points, min, max, grid_res);    
 }
 
-void PointCloud::Draw(const glm::mat4& view_proj)
+void PointCloud::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos)
 {
-    octree_ptr->Draw(view_proj);
+    octree_ptr->Draw(view_proj, camera_pos);
 }
 
 void PointCloud::Debug(const glm::mat4& vpm)
