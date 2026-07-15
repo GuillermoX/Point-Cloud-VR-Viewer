@@ -1,7 +1,7 @@
 #include <Octree.hpp>
 
 // ------------ Octree ----------------
-Octree::Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, float cell_size)
+Octree::Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, unsigned int grid_res)
 {
 	// Get the root node center from min max coords
 	glm::vec3 center;
@@ -15,11 +15,21 @@ Octree::Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max
 	float sideZ = max.z - min.z;
 	float half_node_size = std::max({sideX, sideY, sideZ}) * 0.5f;
 
-	_root_node = std::make_unique<OctreeNode>(center, half_node_size, cell_size);
+	_root_node = std::make_unique<OctreeNode>(center, half_node_size, grid_res, 0);
 	
-	for (point_data_t point : points)
+	unsigned int quarter_vector = points.size() / 4;
+	unsigned int half_vector = points.size() / 2;
+	unsigned int three_quarters_vector = points.size() - quarter_vector;
+	for (unsigned int i = 0; i < points.size(); i++)
 	{
-		_root_node->AddPoint(point);
+		if (i == quarter_vector)
+			std::cout << "[OCTREE | INFO] Loaded 25% of points." << std::endl;
+		else if (i == half_vector)
+			std::cout << "[OCTREE | INFO] Loaded 50% of points." << std::endl;
+		else if (i == three_quarters_vector)
+			std::cout << "[OCTREE | INFO] Loaded 75% of points." << std::endl;
+
+		_root_node->AddPoint(points[i]);
 	}
 
 	_root_node->InitGraphicBuffers();
@@ -93,14 +103,14 @@ void Octree::getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6])
 
 // ----------- OctreeNode -------------------
 
-OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, float cell_size)
-	: _center(center), _half_node_size(half_node_size), _grid(cell_size)
+OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned int grid_res, unsigned int level)
+	: _center(center), _half_node_size(half_node_size), _level(level)
 {
-
+	_grid_ptr = std::make_unique<Grid>(grid_res, (_half_node_size * 2.0) / (float)grid_res, _center - glm::vec3(half_node_size));
 }
 
-OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, float cell_size)
-	: _grid(cell_size / 5.0f)
+OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, unsigned int grid_res, unsigned int level)
+	: _level(level)
 {
 	float quarter_node_size = half_node_size * 0.5;
 	if (index == 0)
@@ -122,8 +132,11 @@ OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char ind
 	else
 		_center = center;
 
-	_half_node_size = quarter_node_size;
-	
+	_half_node_size = quarter_node_size;	
+
+	_grid_ptr = std::make_unique<Grid>(grid_res, (_half_node_size * 2.0) / (float)grid_res, _center - glm::vec3(half_node_size));
+
+	//std::cout << "[OCTREE NODE | INFO] Created octree node level: " << _level << std::endl;
 }
 
 OctreeNode::~OctreeNode()
@@ -137,7 +150,7 @@ OctreeNode::~OctreeNode()
 void OctreeNode::AddPoint(point_data_t& point)
 {
 	// Try adding point, if not possible delegate to subnode
-	if (!_grid.AddPoint(point))
+	if (!_grid_ptr->AddPoint(point, _level))
 	{
 		addToSubnode(point);
 	}
@@ -149,7 +162,7 @@ void OctreeNode::Draw(plane_t planes[6])
 	if (isInsideFrustrum(planes))
 	{	
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_POINTS, 0, _grid.num_points);
+		glDrawArrays(GL_POINTS, 0, _grid_ptr->num_points);
 		glBindVertexArray(0);
 		for (int i = 0; i < 8; i++)
 		{
@@ -191,11 +204,11 @@ void OctreeNode::InitGraphicBuffers()
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	
-	std::vector<point_data_t> points_vector;
-	_grid.PrepareToRender(points_vector);
+	std::vector<point_data_t>& points_vector = _grid_ptr->GetPointVector();
 
 	// Load point data to VBO
     glBufferData(GL_ARRAY_BUFFER, points_vector.size() * sizeof(point_data_t), points_vector.data(), GL_STATIC_DRAW);
+
 
 	// Specify how to read Point coords in shader
     glEnableVertexAttribArray(0);	
@@ -208,6 +221,8 @@ void OctreeNode::InitGraphicBuffers()
     std::cout << "[VBO DEBUG] Total Buffer Size: " << (points_vector.size() * sizeof(point_data_t) / 1024.0f) << " Kbytes." << std::endl;
 
     glBindVertexArray(0);	
+
+	_grid_ptr->DeleteData();		// Delete vector data since it has already been stored into RAM
 	
 	// Init all buffers of active subnodes
 	for (int i = 0; i < 8; i++)
@@ -267,8 +282,10 @@ void OctreeNode::addToSubnode(point_data_t& point)
 	
 	// Create Octree Node if not created
 	if (_subnodes[index] == nullptr)
+	{
 		// Create it with the center of corresponding quarter
-		_subnodes[index] = std::make_unique<OctreeNode>(_center, _half_node_size, index, _grid.GetCellSize());
+		_subnodes[index] = std::make_unique<OctreeNode>(_center, _half_node_size, index, _grid_ptr->GetGridResolution(), _level + 1);
+	}
 
 	_subnodes[index]->AddPoint(point);
 }
@@ -297,53 +314,45 @@ bool OctreeNode::isInsideFrustrum(plane_t planes[6])
 
 // --------------- Support class: Grid -----------------------
 
-Grid::Grid(float cell_size)
-	: _cell_size(cell_size)
+Grid::Grid(unsigned int grid_res, float cell_size, glm::vec3 min)
+	: num_points(0), _grid_control(grid_res* grid_res* grid_res, false), _grid_res(grid_res), 
+	  _cell_size(cell_size), _min(min)
 {
 }
 
-bool Grid::AddPoint(const point_data_t& point)
+bool Grid::AddPoint(const point_data_t& point, unsigned int level)
 {
-	
-	GridKey key;
-	key.x = std::floor(point.position[0] / _cell_size);
-	key.y = std::floor(point.position[1] / _cell_size);
-	key.z = std::floor(point.position[2] / _cell_size);
+	int cellX = std::clamp((int)((point.position[0] - _min.x) / _cell_size), 0, (int)(_grid_res - 1));
+	int cellY = std::clamp((int)((point.position[1] - _min.y) / _cell_size), 0, (int)(_grid_res - 1));
+	int cellZ = std::clamp((int)((point.position[2] - _min.z) / _cell_size), 0, (int)(_grid_res - 1));
 
-	// If cell is empty store the point in it
-	if (hash_map.find(key) == hash_map.end()) {
-		hash_map[key] = point;
-		return true;	// Notify that the point has been stored
-	}
-	
+	int idx = cellX + (cellY * _grid_res) + (cellZ * _grid_res * _grid_res);
 
-	return false;
+	if (!_grid_control[idx] || level >= 3) 
+	{
+		_grid_control[idx] = true;
+		_points.push_back(point);
+		num_points++;
+
+		return true;
+	} 
+	else 
+		return false;
 }
 
-void Grid::PrepareToRender(std::vector<point_data_t>& vector)
+unsigned int Grid::GetGridResolution()
 {
-	vector.clear();
-	vector.reserve(hash_map.size()); // Reservamos memoria de golpe
-
-	// Copy the points from hashmap to vector
-	for (const auto& [key, punto] : hash_map) {
-		vector.push_back(punto);
-	}
-	
-	// Store number of points stored to know when rendering
-	num_points = hash_map.size();
-	// Free the hashmap data
-	hash_map.clear();
+	return _grid_res;
 }
 
-size_t Grid::size()
+void Grid::DeleteData()
 {
-	return hash_map.size();
+	_points.clear();
+	_grid_control.clear();
 }
 
-
-float Grid::GetCellSize()
+std::vector<point_data_t>& Grid::GetPointVector()
 {
-	return _cell_size;
+	return _points;
 }
 

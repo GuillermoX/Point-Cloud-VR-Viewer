@@ -5,8 +5,10 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
 #include <memory>
 #include <vector>
+#include <algorithm>
 
 #include "LASReader.hpp"
 #include "Shader.hpp"
@@ -46,16 +48,19 @@ class Grid {
 public:
 	size_t num_points;
 
-	Grid(float cell_size);
-	bool AddPoint(const point_data_t& point);
-	// Moves all points to plain vector struct and deletes all hash_map data (only stores number of points)
-	void PrepareToRender(std::vector<point_data_t>& vector);
+	Grid(unsigned int grid_res, float cell_size, glm::vec3 min);
+	bool AddPoint(const point_data_t& point, unsigned int level);
 	size_t size();
-	float GetCellSize();
+	unsigned int GetGridResolution();
+	std::vector<point_data_t>& GetPointVector();
+	void DeleteData();	// Deletes all RAM data (since it has already been loaded to GPU RAM)
 
 private:
+	unsigned int _grid_res;
 	float _cell_size;
-	std::unordered_map<GridKey, point_data_t, GridKeyHash> hash_map;
+	glm::vec3 _min;
+	std::vector<bool> _grid_control;
+	std::vector<point_data_t> _points;
 };
 	
 
@@ -66,10 +71,10 @@ class OctreeNode
 public:
 	std::unique_ptr<Shader> debug_shader;
 	// Constructor that just copies center and half_node_size
-	OctreeNode(glm::vec3 center, float half_node_size, float cell_size = 0.2f);
+	OctreeNode(glm::vec3 center, float half_node_size, unsigned int grid_res, unsigned int level);
 
 	// Constructor that creates Octree Node 
-	OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, float cell_size = 0.2f);
+	OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, unsigned int grid_res, unsigned int level);
 
 	~OctreeNode();
 
@@ -81,7 +86,8 @@ public:
 private:
 	glm::vec3 _center;
 	float _half_node_size;
-	Grid _grid;
+	std::unique_ptr<Grid> _grid_ptr;
+	unsigned int _level;
 	
 	std::unique_ptr<OctreeNode> _subnodes[8];
 
@@ -98,7 +104,7 @@ private:
 class Octree
 {
 public:
-	Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, float cell_size);
+	Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, unsigned int grid_res);
 	void AddPoint(point_data_t& point);
 	void Draw(const glm::mat4& view_proj);
 	void Debug(const glm::mat4& vpm);

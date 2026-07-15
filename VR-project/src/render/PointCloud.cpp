@@ -1,6 +1,6 @@
 #include <PointCloud.hpp>
 
-PointCloud::PointCloud(const std::string file_path, size_t max_points, float octree_cell_size)
+PointCloud::PointCloud(const std::string file_path, size_t max_points, unsigned int grid_res)
 {
 	LASReader las_reader;
     glm::vec3 min, max;
@@ -14,12 +14,8 @@ PointCloud::PointCloud(const std::string file_path, size_t max_points, float oct
     std::cout << "Min: (" << min.x << "," << min.y << "," << min.z << ")" << std::endl;
     std::cout << "Max: (" << max.x << "," << max.y << "," << max.z << ")" << std::endl;
 
-    octree_ptr = std::make_unique<Octree>(points, min, max, octree_cell_size);
-
-
-    
+    octree_ptr = std::make_unique<Octree>(points, min, max, grid_res);    
 }
-
 
 void PointCloud::Draw(const glm::mat4& view_proj)
 {
