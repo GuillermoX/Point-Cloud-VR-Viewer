@@ -10,8 +10,11 @@
 #include <vector>
 #include <algorithm>
 
-#include "LASReader.hpp"
+#include "LASReader.hpp" 
 #include "Shader.hpp"
+
+#define MAX_OCTREE_LEVEL 4
+#define MIN_LOD_DISTANCE 100.0		// Distance where the LOD is minimum
 
 // -------------------- Support Struct for Frustrum Culling -------------------
 struct plane_t

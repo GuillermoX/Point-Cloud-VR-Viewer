@@ -149,7 +149,7 @@ void OctreeNode::AddPoint(point_data_t& point)
 {
 	// Try adding point, if not possible delegate to subnode
 	// Limit the maximum level of depth of subnodes
-	if (_grid_ptr->FreeGridCell(point) || _level >= 4)
+	if (_grid_ptr->FreeGridCell(point) || _level == MAX_OCTREE_LEVEL)
 	{
 		_points.push_back(point);
 		_num_points++;
@@ -316,13 +316,9 @@ bool OctreeNode::isInsideFrustrum(plane_t planes[6])
 bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 {
 	float distance = glm::distance(camera_pos, _center);
-	unsigned int max_level;
-	if (distance <= 2.0f)
-		max_level = 4;
-	else if (distance <= 5.0f)
-		max_level = 3;
-	else
-		max_level = 2;
+	unsigned int max_level = distance / (MIN_LOD_DISTANCE / (MAX_OCTREE_LEVEL + 1));
+	if (max_level > MAX_OCTREE_LEVEL) max_level = 5;
+	max_level = MAX_OCTREE_LEVEL - max_level;		// If further LOD level is smaller
 
 	return _level <= max_level;
 }

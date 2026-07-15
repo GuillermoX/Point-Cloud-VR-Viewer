@@ -252,7 +252,7 @@ void SceneManager::ExecuteRenderLoop()
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
     
                 glm::mat4 vpm = projection * view * model;
-                point_cloud->Draw(vpm, model * glm::vec4(cameraPosition, 1.0));
+                point_cloud->Draw(vpm, glm::inverse(model) * glm::vec4(cameraPosition, 1.0));
                 //point_cloud->Debug(vpm);
             }
 
