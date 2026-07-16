@@ -46,8 +46,14 @@ struct scene_config_t
 	bool vr_enabled;
 	bool wire_frame_enabled = false;
 	bool flying_enabled = false;
+	bool octree_debug_enabled = false;
 };
 
+// Struct to check if in frame before a key was also pressed
+struct key_control_t
+{
+	bool octree_debug_key = false;
+};
 
 class SceneManager
 {
@@ -86,6 +92,7 @@ private:
 	screen_manager_t _screen;
 	timing_t _timing;
 	scene_config_t _scene_config;
+	key_control_t _keys_state;
 	bool _scene_valid = true;
 
 	std::unique_ptr<Camera> _camera_ptr;

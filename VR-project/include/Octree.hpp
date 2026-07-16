@@ -13,7 +13,7 @@
 #include "LASReader.hpp" 
 #include "Shader.hpp"
 
-#define MAX_OCTREE_LEVEL 4
+#define MAX_OCTREE_LEVEL 3			// From 0 to MAX_OCTREE_LEVEL
 #define MIN_LOD_DISTANCE 100.0		// Distance where the LOD is minimum
 
 // -------------------- Support Struct for Frustrum Culling -------------------
@@ -79,7 +79,7 @@ public:
 	void AddPoint(point_data_t& point);
 	void InitGraphicBuffers();
 	void Draw(plane_t planes[6], glm::vec3 camera_pos);
-	void Debug(plane_t planes[6], const glm::mat4& vpm);
+	void Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos);
 
 private:
 	glm::vec3 _center;
@@ -108,7 +108,7 @@ public:
 	Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, unsigned int grid_res);
 	void AddPoint(point_data_t& point);
 	void Draw(const glm::mat4& view_proj, glm::vec3 camera_pos);
-	void Debug(const glm::mat4& vpm);
+	void Debug(const glm::mat4& vpm, glm::vec3 camera_pos);
 private:
 	std::unique_ptr<OctreeNode> _root_node;	
 	void getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6]);

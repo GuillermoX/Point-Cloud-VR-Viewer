@@ -252,8 +252,10 @@ void SceneManager::ExecuteRenderLoop()
                 glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
     
                 glm::mat4 vpm = projection * view * model;
-                point_cloud->Draw(vpm, glm::inverse(model) * glm::vec4(cameraPosition, 1.0));
-                //point_cloud->Debug(vpm);
+                cameraPosition = glm::inverse(model) * glm::vec4(cameraPosition, 1.0);
+                point_cloud->Draw(vpm, cameraPosition);
+                if (_scene_config.octree_debug_enabled)
+                    point_cloud->Debug(vpm, cameraPosition);
             }
 
             // Finish the frame in VR mode or screen mode
@@ -299,6 +301,11 @@ void SceneManager::processInput()
 {
     if (glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(_window, true);
+    
+    bool octree_debug_key_pressed = glfwGetKey(_window, GLFW_KEY_B) == GLFW_PRESS;
+    if (octree_debug_key_pressed && !_keys_state.octree_debug_key)
+        _scene_config.octree_debug_enabled = !_scene_config.octree_debug_enabled;
+    _keys_state.octree_debug_key = octree_debug_key_pressed;
 
 
     if (_scene_config.vr_enabled)   // If VR mode delegate Input Processing to VR Manager

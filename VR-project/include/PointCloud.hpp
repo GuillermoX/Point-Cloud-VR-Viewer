@@ -18,7 +18,7 @@ public:
 	
 	PointCloud(const std::string file_path, size_t max_points, unsigned int grid_res);
 	void Draw(const glm::mat4& view_proj, glm::vec3 camera_pos);
-	void Debug(const glm::mat4& vpm);
+	void Debug(const glm::mat4& vpm, glm::vec3 camera_pos);
 
 private:
 	unsigned int VAO, VBO;

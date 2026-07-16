@@ -22,7 +22,7 @@ void PointCloud::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos)
     octree_ptr->Draw(view_proj, camera_pos);
 }
 
-void PointCloud::Debug(const glm::mat4& vpm)
+void PointCloud::Debug(const glm::mat4& vpm, glm::vec3 camera_pos)
 {
-    octree_ptr->Debug(vpm); 
+    octree_ptr->Debug(vpm, camera_pos); 
 }

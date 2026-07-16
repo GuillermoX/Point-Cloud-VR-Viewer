@@ -42,13 +42,13 @@ void Octree::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos)
 	_root_node->Draw(planes, camera_pos);
 }
 
-void Octree::Debug(const glm::mat4& vpm)
+void Octree::Debug(const glm::mat4& vpm, glm::vec3 camera_pos)
 {
 	_root_node->debug_shader->use();
     glUniformMatrix4fv(glGetUniformLocation(_root_node->debug_shader->ID, "vpm"), 1, false, glm::value_ptr(vpm));
 	plane_t planes[6];
 	getFrustrumPlanes(vpm, planes);
-	_root_node->Debug(planes, vpm);
+	_root_node->Debug(planes, vpm, camera_pos);
 }
 
 
@@ -134,7 +134,7 @@ OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char ind
 
 	_half_node_size = quarter_node_size;	
 
-	_grid_ptr = std::make_unique<Grid>(grid_res, (_half_node_size * 2.0) / (float)grid_res, _center - glm::vec3(half_node_size));
+	_grid_ptr = std::make_unique<Grid>(grid_res, (_half_node_size * 2.0) / (float)grid_res, _center - glm::vec3(_half_node_size));
 }
 
 OctreeNode::~OctreeNode()
@@ -166,17 +166,17 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_POINTS, 0, _num_points);
 		glBindVertexArray(0);
+	}
 		for (int i = 0; i < 8; i++)
 		{
 			if (_subnodes[i] != nullptr)
 				_subnodes[i]->Draw(planes, camera_pos);
 		}
-	}
 }
 
-void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm)
+void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos)
 {
-	if (isInsideFrustrum(planes))
+	if (isInsideFrustrum(planes) && levelOfDetail(camera_pos))
 		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 0.0, 1.0, 0.0);
 	else
 		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 1.0, 0.0, 0.0);
@@ -194,7 +194,7 @@ void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm)
 	for (int i = 0; i < 8; i++)
 	{
 		if (_subnodes[i] != nullptr)
-			_subnodes[i]->Debug(planes, vpm);
+			_subnodes[i]->Debug(planes, vpm, camera_pos);
 	}
 }
 
@@ -317,7 +317,7 @@ bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 {
 	float distance = glm::distance(camera_pos, _center);
 	unsigned int max_level = distance / (MIN_LOD_DISTANCE / (MAX_OCTREE_LEVEL + 1));
-	if (max_level > MAX_OCTREE_LEVEL) max_level = 5;
+	if (max_level > MAX_OCTREE_LEVEL) max_level = MAX_OCTREE_LEVEL;
 	max_level = MAX_OCTREE_LEVEL - max_level;		// If further LOD level is smaller
 
 	return _level <= max_level;
