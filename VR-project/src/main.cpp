@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     PointCloud pointCloud("assets/cloud-points/aula.las", max_points, 256);
     scene_manager.AddPointCloud(pointCloud);
     
-    scene_manager.ExecuteRenderLoop();
+    //scene_manager.ExecuteRenderLoop();
    
     return 0;
 }

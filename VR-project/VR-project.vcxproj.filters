@@ -42,7 +42,7 @@
     <ClCompile Include="src\render\PointCloud.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\Octree.cpp">
+    <ClCompile Include="src\render\OctreeBuilder.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>
@@ -167,7 +167,7 @@
     <ClInclude Include="include\PointCloud.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="include\Octree.hpp">
+    <ClInclude Include="include\OctreeBuilder.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

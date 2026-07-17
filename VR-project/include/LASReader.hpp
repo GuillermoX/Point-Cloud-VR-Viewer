@@ -70,11 +70,13 @@ struct LASPointRecord2 {
 };
 #pragma pack(pop)
 
+#pragma pack(push, 1)
 struct point_data_t
 {
     float position[3];
     uint8_t color[3];
 };
+#pragma pack(pop)
 
 
 class LASReader

@@ -1,36 +1,10 @@
 #include <Octree.hpp>
 
 // ------------ Octree ----------------
-Octree::Octree(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, unsigned int grid_res)
+Octree::Octree(std::string& meta_path, std::string& points_path)
 {
-	// Get the root node center from min max coords
-	glm::vec3 center;
-	center.x = (max.x + min.x) * 0.5f;
-	center.y = (max.y + min.y) * 0.5f;
-	center.z = (max.z + min.z) * 0.5f;	
-
-	// Get longest side to get 
-	float sideX = max.x - min.x;
-	float sideY = max.y - min.y;
-	float sideZ = max.z - min.z;
-	float half_node_size = std::max({sideX, sideY, sideZ}) * 0.5f;
-
-	_root_node = std::make_unique<OctreeNode>(center, half_node_size, grid_res, 0);
 	
-	unsigned int quarter_vector = points.size() / 4;
-	unsigned int half_vector = points.size() / 2;
-	unsigned int three_quarters_vector = points.size() - quarter_vector;
-	for (unsigned int i = 0; i < points.size(); i++)
-	{
-		if (i == quarter_vector)
-			std::cout << "[OCTREE | INFO] Loaded 25% of points." << std::endl;
-		else if (i == half_vector)
-			std::cout << "[OCTREE | INFO] Loaded 50% of points." << std::endl;
-		else if (i == three_quarters_vector)
-			std::cout << "[OCTREE | INFO] Loaded 75% of points." << std::endl;
 
-		_root_node->AddPoint(points[i]);
-	}
 
 	_root_node->InitGraphicBuffers();
 }
@@ -51,6 +25,10 @@ void Octree::Debug(const glm::mat4& vpm, glm::vec3 camera_pos)
 	_root_node->Debug(planes, vpm, camera_pos);
 }
 
+void loadBinaryOctree()
+{
+
+}
 
 void Octree::getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6])
 {
@@ -100,63 +78,31 @@ void Octree::getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6])
 
 }
 
+int Octree::obtainIndexFromId(const std::string& id)
+{
+	if (id == "r" || id.empty()) return -1; // If root has no subnode index
+	return id.back() - '0'; // Convert char to number
+
+}
+
 
 // ----------- OctreeNode -------------------
 
-OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned int grid_res, unsigned int level)
-	: _num_points(0), _center(center), _half_node_size(half_node_size), _level(level)
+OctreeNode::OctreeNode(NodeMetadata& metadata, std::string& points_path)
+	: _node_id(metadata.node_id, NODE_ID_LENGHT), _half_size(metadata.half_size), _byte_offset(metadata.byte_offset),
+	  _num_points(metadata.number_points), _points_binary_path(points_path)
 {
-	_grid_ptr = std::make_unique<Grid>(grid_res, (_half_node_size * 2.0) / (float)grid_res, _center - glm::vec3(half_node_size));
+	_center = glm::vec3(metadata.center[0], metadata.center[1], metadata.center[2]);
+	_level = _node_id.length() - 1;	// Calculate the depth level from node id
 }
 
-OctreeNode::OctreeNode(glm::vec3 center, float half_node_size, unsigned char index, unsigned int grid_res, unsigned int level)
-	: _num_points(0), _level(level)
-{
-	float quarter_node_size = half_node_size * 0.5;
-	if (index == 0)
-		_center = center + glm::vec3(-quarter_node_size);
-	else if (index == 1)
-		_center = center + glm::vec3(quarter_node_size, -quarter_node_size, -quarter_node_size);
-	else if (index == 2)
-		_center = center + glm::vec3(-quarter_node_size, quarter_node_size, -quarter_node_size);
-	else if (index == 3)
-		_center = center + glm::vec3(quarter_node_size, quarter_node_size, -quarter_node_size);
-	else if (index == 4)
-		_center = center + glm::vec3(-quarter_node_size, -quarter_node_size, quarter_node_size);
-	else if (index == 5)
-		_center = center + glm::vec3(quarter_node_size, -quarter_node_size, quarter_node_size);
-	else if (index == 6)
-		_center = center + glm::vec3(-quarter_node_size, quarter_node_size, quarter_node_size);
-	else if (index == 7)
-		_center = center + glm::vec3(quarter_node_size);
-	else
-		_center = center;
 
-	_half_node_size = quarter_node_size;	
-
-	_grid_ptr = std::make_unique<Grid>(grid_res, (_half_node_size * 2.0) / (float)grid_res, _center - glm::vec3(_half_node_size));
-}
 
 OctreeNode::~OctreeNode()
 {
 	glDeleteBuffers(1, &VBO);
 	glDeleteVertexArrays(1, &VAO);
-}
-	
-
-
-void OctreeNode::AddPoint(point_data_t& point)
-{
-	// Try adding point, if not possible delegate to subnode
-	// Limit the maximum level of depth of subnodes
-	if (_grid_ptr->FreeGridCell(point) || _level == MAX_OCTREE_LEVEL)
-	{
-		_points.push_back(point);
-		_num_points++;
-	}
-	else	
-		addToSubnode(point);
-}
+}	
 
 
 void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
@@ -183,7 +129,7 @@ void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera
 
 	glm::mat4 insideModel = glm::mat4(1.0f);
 	insideModel = glm::translate(insideModel, _center);
-	insideModel = glm::scale(insideModel, glm::vec3(_half_node_size * 2.0f));
+	insideModel = glm::scale(insideModel, glm::vec3(_half_size * 2.0f));
 	glUniformMatrix4fv(glGetUniformLocation(debug_shader->ID, "insideModel"), 1, false, glm::value_ptr(insideModel));
 
 	glBindVertexArray(debug_VAO);
@@ -200,8 +146,6 @@ void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera
 
 void OctreeNode::InitGraphicBuffers()
 {
-	_grid_ptr->DeleteData();		// Delete grid control arrays
-
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 
@@ -220,8 +164,8 @@ void OctreeNode::InitGraphicBuffers()
     glEnableVertexAttribArray(1);	
     glVertexAttribPointer(1, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(point_data_t), (void*)offsetof(point_data_t, color));
 
-    std::cout << "[VBO DEBUG] Sizeof Vertex Struct: " << sizeof(point_data_t) << " bytes." << std::endl;
-    std::cout << "[VBO DEBUG] Total Buffer Size: " << (_points.size() * sizeof(point_data_t) / 1024.0f) << " Kbytes." << std::endl;
+    std::cout << "[VBO DEBUG OCTREE | " << _node_id << "] Sizeof Vertex Struct : " << sizeof(point_data_t) << " bytes." << std::endl;
+    std::cout << "[VBO DEBUG OCTREE | " << _node_id << "] Total Buffer Size: " << (_points.size() * sizeof(point_data_t) / 1024.0f) << " Kbytes." << std::endl;
 
     glBindVertexArray(0);	
 
@@ -270,27 +214,6 @@ void OctreeNode::InitGraphicBuffers()
 	
 }
 
-void OctreeNode::addToSubnode(point_data_t& point)
-{
-	unsigned char index = 0;
-	if (point.position[0] > _center.x)
-		index |= 1;		// First bit to one
-
-	if (point.position[1] > _center.y)
-		index |= 2;		// Second bit to one
-
-	if (point.position[2] > _center.z)
-		index |= 4;		// Third bit to one
-	
-	// Create Octree Node if not created
-	if (_subnodes[index] == nullptr)
-	{
-		// Create it with the center of corresponding quarter
-		_subnodes[index] = std::make_unique<OctreeNode>(_center, _half_node_size, index, _grid_ptr->GetGridResolution(), _level + 1);
-	}
-
-	_subnodes[index]->AddPoint(point);
-}
 
 bool OctreeNode::isInsideFrustrum(plane_t planes[6])
 {	
@@ -299,9 +222,9 @@ bool OctreeNode::isInsideFrustrum(plane_t planes[6])
 
 		// Find point of node nearest to the plane
 		glm::vec3 p = _center;
-		if (plane.normal.x >= 0) p.x += _half_node_size; else p.x -= _half_node_size;
-		if (plane.normal.y >= 0) p.y += _half_node_size; else p.y -= _half_node_size;
-		if (plane.normal.z >= 0) p.z += _half_node_size; else p.z -= _half_node_size;
+		if (plane.normal.x >= 0) p.x += _half_size; else p.x -= _half_size;
+		if (plane.normal.y >= 0) p.y += _half_size; else p.y -= _half_size;
+		if (plane.normal.z >= 0) p.z += _half_size; else p.z -= _half_size;
 
 		// If the nearest point of the plane is behind the plane the whole node box is out
 		if (plane.getDistance(p) < 0) {
