@@ -3,8 +3,7 @@
 // ------------ Octree ----------------
 Octree::Octree(std::string& meta_path, std::string& points_path)
 {
-	
-
+	loadBinaryOctree(meta_path, points_path);
 
 	_root_node->InitGraphicBuffers();
 }
@@ -25,9 +24,61 @@ void Octree::Debug(const glm::mat4& vpm, glm::vec3 camera_pos)
 	_root_node->Debug(planes, vpm, camera_pos);
 }
 
-void loadBinaryOctree()
+void Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
 {
+	std::ifstream file(meta_path, std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "[OCTREE | ERROR] Unable to open binary file: " << meta_path << std::endl;
+    }		
 
+	uint32_t num_nodes = 0;
+	file.read(reinterpret_cast<char*> (&num_nodes), sizeof(num_nodes));
+	
+	if (num_nodes == 0)
+	{
+		std::cerr << "[OCTREE | WARNING] No nodes found in metadata bin file: " << meta_path << std::endl;
+		return;
+	}
+	
+	std::queue<OctreeNode*> node_queue;
+	
+	NodeMetadata node_meta;
+	file.read(reinterpret_cast<char*>(&node_meta), sizeof(node_meta));
+	_root_node = std::make_unique<OctreeNode>(node_meta, points_path);
+	node_queue.push(_root_node.get());		// Add root as first element in queue
+
+	for (int i = 0; i < num_nodes - 1; i++)
+	{
+		file.read(reinterpret_cast<char*>(&node_meta), sizeof(node_meta));
+	
+		OctreeNode* front_node = node_queue.front();
+		std::string subnode_id(node_meta.node_id);
+		// Find subnode's parent
+		while (!isSubnodeOf(front_node->node_id, subnode_id))
+		{
+			// If is not child go to next queue's node and forget last node
+			node_queue.pop();
+
+			if (node_queue.empty())		// If no more parent nodes binary hierarchy broken
+				break;
+			
+			front_node = node_queue.front();
+		}
+
+		if (node_queue.empty())	// If parent node not found binary is corrupted
+		{
+			std::cerr << "[OCTREE | ERROR] Corrupted octree metadata binary, node hierarchy broken" << std::endl;
+			return;
+		}
+
+		// Get index from subnode and add it to current front queue node	
+		unsigned int subnode_index = obtainIndexFromId(subnode_id);
+		front_node->AddSubnode(node_meta, points_path, subnode_index);
+
+		// Add subnode to queue since it can be other subnode's parent
+		node_queue.push(front_node->GetSubnode(subnode_index));	
+					
+	}
 }
 
 void Octree::getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6])
@@ -85,15 +136,25 @@ int Octree::obtainIndexFromId(const std::string& id)
 
 }
 
+bool Octree::isSubnodeOf(const std::string& id_parent, const std::string& id_subnode)
+{
+	// Subnode's id has one more character than parent's
+    if (id_subnode.length() != id_parent.length() + 1) {
+        return false;
+    }
+	// Subnode's id has to start as the parent one
+    return id_subnode.rfind(id_parent, 0) == 0;
+}
+
 
 // ----------- OctreeNode -------------------
 
 OctreeNode::OctreeNode(NodeMetadata& metadata, std::string& points_path)
-	: _node_id(metadata.node_id, NODE_ID_LENGHT), _half_size(metadata.half_size), _byte_offset(metadata.byte_offset),
+	: node_id(metadata.node_id), _half_size(metadata.half_size), _byte_offset(metadata.byte_offset),
 	  _num_points(metadata.number_points), _points_binary_path(points_path)
 {
 	_center = glm::vec3(metadata.center[0], metadata.center[1], metadata.center[2]);
-	_level = _node_id.length() - 1;	// Calculate the depth level from node id
+	_level = node_id.length() - 1;	// Calculate the depth level from node id
 }
 
 
@@ -104,6 +165,17 @@ OctreeNode::~OctreeNode()
 	glDeleteVertexArrays(1, &VAO);
 }	
 
+void OctreeNode::AddSubnode(NodeMetadata& metadata, std::string& points_path, unsigned int index)
+{
+	if (index > 7) return;	// Not valid index
+
+	_subnodes[index] = std::make_unique<OctreeNode>(metadata, points_path);
+}
+
+OctreeNode* OctreeNode::GetSubnode(unsigned int index)
+{
+	return _subnodes[index].get();
+}
 
 void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
 {
@@ -154,7 +226,9 @@ void OctreeNode::InitGraphicBuffers()
 	
 
 	// Load point data to VBO
-    glBufferData(GL_ARRAY_BUFFER, _points.size() * sizeof(point_data_t), _points.data(), GL_STATIC_DRAW);
+	std::vector<point_data_t> points;
+	loadPointsFromBinary(points);	// Load points from points binary file (TODO: Dynamic points loading)
+    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(point_data_t), points.data(), GL_STATIC_DRAW);
 
 
 	// Specify how to read Point coords in shader
@@ -164,8 +238,8 @@ void OctreeNode::InitGraphicBuffers()
     glEnableVertexAttribArray(1);	
     glVertexAttribPointer(1, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(point_data_t), (void*)offsetof(point_data_t, color));
 
-    std::cout << "[VBO DEBUG OCTREE | " << _node_id << "] Sizeof Vertex Struct : " << sizeof(point_data_t) << " bytes." << std::endl;
-    std::cout << "[VBO DEBUG OCTREE | " << _node_id << "] Total Buffer Size: " << (_points.size() * sizeof(point_data_t) / 1024.0f) << " Kbytes." << std::endl;
+    std::cout << "[VBO DEBUG OCTREE | " << node_id << "] Sizeof Vertex Struct : " << sizeof(point_data_t) << " bytes." << std::endl;
+    std::cout << "[VBO DEBUG OCTREE | " << node_id << "] Total Buffer Size: " << (points.size() * sizeof(point_data_t) / 1024.0f) << " Kbytes." << std::endl;
 
     glBindVertexArray(0);	
 
@@ -214,6 +288,21 @@ void OctreeNode::InitGraphicBuffers()
 	
 }
 
+unsigned char OctreeNode::loadPointsFromBinary(std::vector<point_data_t>& points)
+{		
+	std::ifstream file(_points_binary_path, std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "[OCTREE " << node_id << " | ERROR] Unable to open binary file : " << _points_binary_path << std::endl;
+		return 1;	// Error opening binary
+    }		
+	
+	points.resize(_num_points);
+	file.seekg(_byte_offset, std::ios::beg);	// Move file read pointer to byte offset where points are stored
+	file.read(reinterpret_cast<char*>(points.data()), _num_points * sizeof(point_data_t));
+
+	return 0;
+
+}
 
 bool OctreeNode::isInsideFrustrum(plane_t planes[6])
 {	
@@ -244,43 +333,6 @@ bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 	max_level = MAX_OCTREE_LEVEL - max_level;		// If further LOD level is smaller
 
 	return _level <= max_level;
-}
-
-
-
-// --------------- Support class: Grid -----------------------
-
-Grid::Grid(unsigned int grid_res, float cell_size, glm::vec3 min)
-	: _grid_control(grid_res* grid_res* grid_res, false), _grid_res(grid_res), 
-	  _cell_size(cell_size), _min(min)
-{
-}
-
-bool Grid::FreeGridCell(const point_data_t& point)
-{
-	int cellX = std::clamp((int)((point.position[0] - _min.x) / _cell_size), 0, (int)(_grid_res - 1));
-	int cellY = std::clamp((int)((point.position[1] - _min.y) / _cell_size), 0, (int)(_grid_res - 1));
-	int cellZ = std::clamp((int)((point.position[2] - _min.z) / _cell_size), 0, (int)(_grid_res - 1));
-
-	int idx = cellX + (cellY * _grid_res) + (cellZ * _grid_res * _grid_res);
-
-	if (!_grid_control[idx]) 
-	{
-		_grid_control[idx] = true;
-		return true;
-	} 
-	else 
-		return false;
-}
-
-unsigned int Grid::GetGridResolution()
-{
-	return _grid_res;
-}
-
-void Grid::DeleteData()
-{
-	_grid_control.clear();
 }
 
 

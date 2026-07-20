@@ -28,20 +28,18 @@ PointCloud::PointCloud(const std::string file_path, size_t max_points, unsigned 
 		// Generate octree preprocessed binaries
         octree_builder.CreateOctreeBinary(meta_path, points_path);
     }
-	else     // If all octree binaries available
-	{
-		//octree_ptr = std::make_unique<Octree>(meta_path, points_path);
-	}
-
+	
+	// Create rendering octree structure
+	octree_ptr = std::make_unique<Octree>(meta_path, points_path);
 
 }
 
 void PointCloud::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos)
 {
-    //octree_ptr->Draw(view_proj, camera_pos);
+    octree_ptr->Draw(view_proj, camera_pos);
 }
 
 void PointCloud::Debug(const glm::mat4& vpm, glm::vec3 camera_pos)
 {
-    // octree_ptr->Debug(vpm, camera_pos); 
+    octree_ptr->Debug(vpm, camera_pos); 
 }

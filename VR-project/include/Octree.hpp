@@ -40,6 +40,7 @@ class OctreeNode
 {
 public:
 	std::unique_ptr<Shader> debug_shader;
+	std::string node_id;
 	// Constructor that just copies center and half_node_size
 	OctreeNode(NodeMetadata& metadata, std::string& points_path);
 
@@ -49,9 +50,10 @@ public:
 	void InitGraphicBuffers();
 	void Draw(plane_t planes[6], glm::vec3 camera_pos);
 	void Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos);
+	void AddSubnode(NodeMetadata& metadata, std::string& points_path, unsigned int index);
+	OctreeNode* GetSubnode(unsigned int index);
 
 private:
-	std::string _node_id;
 	glm::vec3 _center;
 	float _half_size;
 	uint64_t _byte_offset;
@@ -64,6 +66,7 @@ private:
 	unsigned int VBO, VAO;
 	unsigned int debug_VBO, debug_VAO;
 
+	unsigned char loadPointsFromBinary(std::vector<point_data_t>& points);
 	bool isInsideFrustrum(plane_t planes[6]);
 	bool levelOfDetail(glm::vec3 camera_pos);
 
@@ -79,9 +82,10 @@ public:
 	void Debug(const glm::mat4& vpm, glm::vec3 camera_pos);
 private:
 	std::unique_ptr<OctreeNode> _root_node;	
-	void loadBinaryOctree();
+	void loadBinaryOctree(std::string& meta_path, std::string& points_path);
 	void getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6]);
 	int obtainIndexFromId(const std::string& id);
+	bool isSubnodeOf(const std::string& id_parent, const std::string& id_subnode);
 };
 
 

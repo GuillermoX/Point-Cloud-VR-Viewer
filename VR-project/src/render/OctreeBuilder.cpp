@@ -80,8 +80,7 @@ void OctreeBuilder::CreateOctreeBinary(const std::string& metadata_path, const s
         if (metadata.number_points > 0) 
 		{
             points_file.write(
-                reinterpret_cast<const char*>(node_points.data()), 
-                metadata.number_points * sizeof(point_data_t)
+                reinterpret_cast<const char*>(node_points.data()), metadata.number_points * sizeof(point_data_t)
             );
         }
 
@@ -96,7 +95,8 @@ void OctreeBuilder::CreateOctreeBinary(const std::string& metadata_path, const s
             }
         }
 
-		std::cout << "[OCTREE BUILDER | INFO] " << metadata.number_points << " points of node " << current_node->node_id << " written." << std::endl;
+		std::cout << "[OCTREE BUILDER | INFO] " << metadata.number_points << " points of node " << current_node->node_id << " written. Total KB: "
+			<< (metadata.number_points * sizeof(point_data_t))/1024.0f << std::endl;
 	}
 
 	points_file.close();

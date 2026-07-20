@@ -33,19 +33,6 @@ struct NodeMetadata
 #pragma pack(pop)
 
 
-
-// -------------------- Support Struct for Frustrum Culling -------------------
-struct plane_t
-{
-	glm::vec3 normal;
-	float d;
-
-	float getDistance(glm::vec3 point)
-	{
-        return glm::dot(normal, point) + d;
-	}
-};
-
 // --------------------- Support Class for Uniform Grid ---------------------
 struct GridKey {
     int x, y, z;
@@ -117,7 +104,6 @@ class OctreeBuilder
 {
 public:
 	OctreeBuilder(std::vector<point_data_t>& points, glm::vec3& min, glm::vec3& max, unsigned int grid_res);
-	void AddPoint(point_data_t& point);
 	void CreateOctreeBinary(const std::string& metadata_path, const std::string& points_path);
 private:
 	std::unique_ptr<OctreeBuilderNode> _root_node;
