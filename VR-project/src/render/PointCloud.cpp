@@ -28,7 +28,7 @@ PointCloud::PointCloud(const std::string file_path, size_t max_points, unsigned 
 		// Generate octree preprocessed binaries
         octree_builder.CreateOctreeBinary(meta_path, points_path);
     }
-	
+
 	// Create rendering octree structure
 	octree_ptr = std::make_unique<Octree>(meta_path, points_path);
 

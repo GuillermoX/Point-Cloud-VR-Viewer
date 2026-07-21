@@ -12,10 +12,14 @@
 #include <algorithm>
 #include <array>
 #include <queue>
+#include <iostream>
+#include <atomic>
 
 #include "LASReader.hpp" 
 #include "Shader.hpp"
 #include "OctreeBuilder.hpp"
+#include "PointBufferState.hpp"
+#include "DataManager.hpp"
 
 #define MIN_LOD_DISTANCE 100.0		// Distance where the LOD is minimum
 
@@ -60,13 +64,16 @@ private:
 	size_t _num_points;
 	unsigned int _level;
 	std::string _points_binary_path;
+
+	std::vector<point_data_t> points;
 	
 	std::unique_ptr<OctreeNode> _subnodes[8];
 
 	unsigned int VBO, VAO;
 	unsigned int debug_VBO, debug_VAO;
+	std::atomic<PointBufferState> _state{ PointBufferState::EMPTY };
+	
 
-	unsigned char loadPointsFromBinary(std::vector<point_data_t>& points);
 	bool isInsideFrustrum(plane_t planes[6]);
 	bool levelOfDetail(glm::vec3 camera_pos);
 

@@ -4,6 +4,9 @@
 Octree::Octree(std::string& meta_path, std::string& points_path)
 {
 	loadBinaryOctree(meta_path, points_path);
+	
+	// Initialize DataManager
+	DataManager::Init(points_path, NUM_WORKERS);
 
 	_root_node->InitGraphicBuffers();
 }
@@ -178,18 +181,40 @@ OctreeNode* OctreeNode::GetSubnode(unsigned int index)
 }
 
 void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
-{
-	if (isInsideFrustrum(planes) && levelOfDetail(camera_pos))
-	{	
+{	
+	// Check if buffer ready to be uploaded to VRAM
+	if (_state == PointBufferState::READY_TO_LOAD_VRAM)	// If buffer in RAM buf not VRAM load it to GPU
+	{
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_POINTS, 0, _num_points);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(point_data_t), points.data(), GL_STATIC_DRAW);	
 		glBindVertexArray(0);
+		_state.store(PointBufferState::READY_IN_VRAM, std::memory_order_release);
+		points.clear();		// Delete point buffer from RAM because is already stored in VRAM
 	}
+	else if (_state == PointBufferState::EMPTY)			// If buffer empty (not in VRAM nor RAM)
+	{
+		points.resize(_num_points);		// Resize to prepare buffer 
+		DataManager& data_manager = DataManager::GetInstance();		// Get singleton instance of DataManager
+		// Add the load buffer task to the DataManager instance
+		data_manager.AddLoadVectorTask(reinterpret_cast<char*>(points.data()), _num_points, _byte_offset, _state);
+	}
+	
+	// Check if buffer is ready to be drawn
+	if (_state == PointBufferState::READY_IN_VRAM)		// If buffer inside VRAM just render it
+	{
+		if (isInsideFrustrum(planes) && levelOfDetail(camera_pos))
+		{
+			glBindVertexArray(VAO);
+			glDrawArrays(GL_POINTS, 0, _num_points);
+			glBindVertexArray(0);
+		}
 		for (int i = 0; i < 8; i++)
 		{
 			if (_subnodes[i] != nullptr)
 				_subnodes[i]->Draw(planes, camera_pos);
 		}
+	}
 }
 
 void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos)
@@ -223,13 +248,6 @@ void OctreeNode::InitGraphicBuffers()
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	
-
-	// Load point data to VBO
-	std::vector<point_data_t> points;
-	loadPointsFromBinary(points);	// Load points from points binary file (TODO: Dynamic points loading)
-    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(point_data_t), points.data(), GL_STATIC_DRAW);
-
 
 	// Specify how to read Point coords in shader
     glEnableVertexAttribArray(0);	
@@ -286,22 +304,6 @@ void OctreeNode::InitGraphicBuffers()
 
 	debug_shader = std::make_unique<Shader>("assets/shaders/debug.vert", "assets/shaders/debug.frag");
 	
-}
-
-unsigned char OctreeNode::loadPointsFromBinary(std::vector<point_data_t>& points)
-{		
-	std::ifstream file(_points_binary_path, std::ios::binary);
-    if (!file.is_open()) {
-        std::cerr << "[OCTREE " << node_id << " | ERROR] Unable to open binary file : " << _points_binary_path << std::endl;
-		return 1;	// Error opening binary
-    }		
-	
-	points.resize(_num_points);
-	file.seekg(_byte_offset, std::ios::beg);	// Move file read pointer to byte offset where points are stored
-	file.read(reinterpret_cast<char*>(points.data()), _num_points * sizeof(point_data_t));
-
-	return 0;
-
 }
 
 bool OctreeNode::isInsideFrustrum(plane_t planes[6])
