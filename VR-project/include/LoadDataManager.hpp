@@ -20,11 +20,12 @@ struct data_task_t
 };
 
 // Singleton class that manages disk data and import's it to octree nodes
-class DataManager
+class LoadDataManager
 {
 private:
 
 	// Instance properties
+	// Data loading properties
 	std::vector<std::thread> _workers;
 	std::queue<data_task_t> _task_queue;
 	
@@ -34,18 +35,17 @@ private:
 
 	std::string _base_path;
 
-
 	// Avoid creating new instances manually
-	DataManager(const std::string& base_path, unsigned int num_workers);	// Make constructor private
-	~DataManager();
-	DataManager(const DataManager&) = delete;	// Delete copy constructor
-	DataManager& operator=(const DataManager&) = delete;	// Delete asignation operator
+	LoadDataManager(const std::string& base_path, unsigned int num_workers);	// Make constructor private
+	~LoadDataManager();
+	LoadDataManager(const LoadDataManager&) = delete;	// Delete copy constructor
+	LoadDataManager& operator=(const LoadDataManager&) = delete;	// Delete asignation operator
 
 	void workerLoop();
 
 
 public:
-	// Static method to initialize DataManager singleton instance
+	// Static method to initialize LoadDataManager singleton instance
 	static void Init(const std::string& base_path, unsigned int num_threads)
 	{
 		static bool instance_created = false;
@@ -55,16 +55,16 @@ public:
 		}
 	}
 
-	// Static method to get DataManager instance
-	static DataManager& GetInstance()
+	// Static method to get LoadDataManager instance
+	static LoadDataManager& GetInstance()
 	{	
 		return getInstancePtr(nullptr, 1);	// Ignore params since won't create new instances
 	}
 
-	// Helper to handle DataManager intance securily
-    static DataManager& getInstancePtr(const std::string* base_path, unsigned int num_threads) {
+	// Helper to handle LoadDataManager intance securily
+    static LoadDataManager& getInstancePtr(const std::string* base_path, unsigned int num_threads) {
 		// Static variable that will be created onces
-        static DataManager instance(base_path ? *base_path : "", num_threads);
+        static LoadDataManager instance(base_path ? *base_path : "", num_threads);
         return instance;
     }
 

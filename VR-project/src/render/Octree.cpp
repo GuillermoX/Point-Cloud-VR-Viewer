@@ -5,8 +5,8 @@ Octree::Octree(std::string& meta_path, std::string& points_path)
 {
 	loadBinaryOctree(meta_path, points_path);
 	
-	// Initialize DataManager
-	DataManager::Init(points_path, NUM_WORKERS);
+	// Initialize LoadDataManager
+	LoadDataManager::Init(points_path, NUM_WORKERS);
 
 	_root_node->InitGraphicBuffers();
 }
@@ -15,6 +15,7 @@ void Octree::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos)
 {
 	plane_t planes[6];
 	getFrustrumPlanes(view_proj, planes);
+	VRAMManager::GetInstance().CheckAndAct();
 	_root_node->Draw(planes, camera_pos);
 }
 
@@ -189,14 +190,16 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(point_data_t), points.data(), GL_STATIC_DRAW);	
 		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		_state.store(PointBufferState::READY_IN_VRAM, std::memory_order_release);
 		points.clear();		// Delete point buffer from RAM because is already stored in VRAM
+		VRAMManager::GetInstance().RegisterNode(this);
 	}
 	else if (_state == PointBufferState::EMPTY)			// If buffer empty (not in VRAM nor RAM)
 	{
 		points.resize(_num_points);		// Resize to prepare buffer 
-		DataManager& data_manager = DataManager::GetInstance();		// Get singleton instance of DataManager
-		// Add the load buffer task to the DataManager instance
+		LoadDataManager& data_manager = LoadDataManager::GetInstance();		// Get singleton instance of LoadDataManager
+		// Add the load buffer task to the LoadDataManager instance
 		data_manager.AddLoadVectorTask(reinterpret_cast<char*>(points.data()), _num_points, _byte_offset, _state);
 	}
 	
@@ -208,7 +211,9 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
 			glBindVertexArray(VAO);
 			glDrawArrays(GL_POINTS, 0, _num_points);
 			glBindVertexArray(0);
+			VRAMManager::GetInstance().UpdateNode(this);
 		}
+
 		for (int i = 0; i < 8; i++)
 		{
 			if (_subnodes[i] != nullptr)
@@ -303,6 +308,17 @@ void OctreeNode::InitGraphicBuffers()
     glBindVertexArray(0);
 
 	debug_shader = std::make_unique<Shader>("assets/shaders/debug.vert", "assets/shaders/debug.frag");
+	
+}
+
+void OctreeNode::DeleteNodeVRAMData()
+{	
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);	
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	_state.store(PointBufferState::EMPTY, std::memory_order_release);
 	
 }
 

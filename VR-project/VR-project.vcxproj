@@ -21,8 +21,8 @@
   <ItemGroup>
     <ClCompile Include="src\extern\glad.c" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\render\DataManager.cpp" />
     <ClCompile Include="src\render\LASReader.cpp" />
+    <ClCompile Include="src\render\LoadDataManager.cpp" />
     <ClCompile Include="src\render\Mesh.cpp" />
     <ClCompile Include="src\render\Model.cpp" />
     <ClCompile Include="src\render\Octree.cpp" />
@@ -30,6 +30,7 @@
     <ClCompile Include="src\render\PointCloud.cpp" />
     <ClCompile Include="src\render\SceneManager.cpp" />
     <ClCompile Include="src\render\Shader.cpp" />
+    <ClCompile Include="src\render\VRAMManager.cpp" />
     <ClCompile Include="src\render\VRManager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -43,7 +44,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Camera.hpp" />
-    <ClInclude Include="include\DataManager.hpp" />
     <ClInclude Include="include\extern\CLI\App.hpp" />
     <ClInclude Include="include\extern\CLI\Argv.hpp" />
     <ClInclude Include="include\extern\CLI\CLI.hpp" />
@@ -74,6 +74,7 @@
     <ClInclude Include="include\extern\CLI\Version.hpp" />
     <ClInclude Include="include\extern\stb_image.h" />
     <ClInclude Include="include\LASReader.hpp" />
+    <ClInclude Include="include\LoadDataManager.hpp" />
     <ClInclude Include="include\Mesh.hpp" />
     <ClInclude Include="include\Model.hpp" />
     <ClInclude Include="include\Octree.hpp" />
@@ -82,6 +83,7 @@
     <ClInclude Include="include\PointCloud.hpp" />
     <ClInclude Include="include\SceneManager.hpp" />
     <ClInclude Include="include\Shader.hpp" />
+    <ClInclude Include="include\VRAMManager.hpp" />
     <ClInclude Include="include\VRManager.hpp" />
   </ItemGroup>
   <ItemGroup>

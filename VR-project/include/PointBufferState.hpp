@@ -1,5 +1,5 @@
-// ------------------ Support enum for DataManager and Octree ---------------------
-// (Separate header to avoid circular dependencie between DataManager and Octree)
+// ------------------ Support enum for LoadDataManager and Octree ---------------------
+// (Separate header to avoid circular dependencie between LoadDataManager and Octree)
 #ifndef POINT_BUFFER_STATE_H
 #define POINT_BUFFER_STATE_H
 enum class PointBufferState

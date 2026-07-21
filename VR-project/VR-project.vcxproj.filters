@@ -48,7 +48,10 @@
     <ClCompile Include="src\render\Octree.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="src\render\DataManager.cpp">
+    <ClCompile Include="src\render\LoadDataManager.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\VRAMManager.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
   </ItemGroup>
@@ -179,10 +182,13 @@
     <ClInclude Include="include\Octree.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="include\DataManager.hpp">
+    <ClInclude Include="include\PointBufferState.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
-    <ClInclude Include="include\PointBufferState.hpp">
+    <ClInclude Include="include\LoadDataManager.hpp">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\VRAMManager.hpp">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

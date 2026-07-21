@@ -1,18 +1,18 @@
-#include <DataManager.hpp>
+#include <LoadDataManager.hpp>
 
 
-DataManager::DataManager(const std::string& base_path, unsigned int num_workers)
+LoadDataManager::LoadDataManager(const std::string& base_path, unsigned int num_workers)
 {
 	_base_path = base_path;		// Copy base path and store it in instance property
 
 	for (int i = 0; i < num_workers; i++)
 	{
-		_workers.emplace_back(&DataManager::workerLoop, this);
+		_workers.emplace_back(&LoadDataManager::workerLoop, this);
 	}
 }
 
-DataManager::~DataManager() {
-	// If DataManager instance deleted notify all threads to stop
+LoadDataManager::~LoadDataManager() {
+	// If LoadDataManager instance deleted notify all threads to stop
     {
         std::lock_guard<std::mutex> lock(_mutex);
         _stop = true;
@@ -26,7 +26,7 @@ DataManager::~DataManager() {
     }
 }
 
-void DataManager::workerLoop()
+void LoadDataManager::workerLoop()
 {
 	// Open binary file once in each thread
 	std::ifstream file(_base_path, std::ios::binary);
@@ -75,7 +75,7 @@ void DataManager::workerLoop()
 
 
 
-void DataManager::AddLoadVectorTask(char* vector, uint64_t points, uint64_t byte_offset, std::atomic<PointBufferState>& state)
+void LoadDataManager::AddLoadVectorTask(char* vector, uint64_t points, uint64_t byte_offset, std::atomic<PointBufferState>& state)
 {
 	state.store(PointBufferState::LOADING, std::memory_order_release);	// Update buffer state to Loading
 	// Create task struct

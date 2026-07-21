@@ -14,12 +14,14 @@
 #include <queue>
 #include <iostream>
 #include <atomic>
+#include <list>
 
 #include "LASReader.hpp" 
 #include "Shader.hpp"
 #include "OctreeBuilder.hpp"
 #include "PointBufferState.hpp"
-#include "DataManager.hpp"
+#include "LoadDataManager.hpp"
+#include "VRAMManager.hpp"
 
 #define MIN_LOD_DISTANCE 100.0		// Distance where the LOD is minimum
 
@@ -45,6 +47,10 @@ class OctreeNode
 public:
 	std::unique_ptr<Shader> debug_shader;
 	std::string node_id;
+	
+	//Iterator used in VRAMManager (temporal)
+	std::list<OctreeNode*>::iterator lru_iterator;
+
 	// Constructor that just copies center and half_node_size
 	OctreeNode(NodeMetadata& metadata, std::string& points_path);
 
@@ -56,6 +62,8 @@ public:
 	void Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos);
 	void AddSubnode(NodeMetadata& metadata, std::string& points_path, unsigned int index);
 	OctreeNode* GetSubnode(unsigned int index);
+	void DeleteNodeVRAMData();
+	size_t GetNumPoints() { return _num_points; }
 
 private:
 	glm::vec3 _center;
