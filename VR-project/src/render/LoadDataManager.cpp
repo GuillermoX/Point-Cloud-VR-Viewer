@@ -64,8 +64,6 @@ void LoadDataManager::workerLoop()
 		// Add disk data to buffer
 		file.seekg(task.byte_offset, std::ios::beg);	// Move file read pointer to byte offset where points are stored
 		file.read(task.vector, task.num_points * sizeof(point_data_t));
-		std::cout << "[DATA MANAGER | INFO] Loaded buffer. Num points: " << task.num_points << ". Size: "
-				<< (task.num_points * sizeof(point_data_t) / 1024.0f) << " KB." << std::endl;
 	
 		// Update node state so it knows buffer is filled
 		task.state->store(PointBufferState::READY_TO_LOAD_VRAM, std::memory_order_release);

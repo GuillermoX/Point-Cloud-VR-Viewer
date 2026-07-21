@@ -4,6 +4,8 @@
 Octree::Octree(std::string& meta_path, std::string& points_path)
 {
 	loadBinaryOctree(meta_path, points_path);
+	std::cout << "[OCTREE | INFO] Octree structure loaded from binary file: " << meta_path << std::endl;
+	std::cout << "[OCTREE | INFO] Using octree points binary file: " << points_path << std::endl;
 	
 	// Initialize LoadDataManager
 	LoadDataManager::Init(points_path, NUM_WORKERS);
@@ -15,7 +17,7 @@ void Octree::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos)
 {
 	plane_t planes[6];
 	getFrustrumPlanes(view_proj, planes);
-	VRAMManager::GetInstance().CheckAndAct();
+	VRAMManager::GetInstance().CheckAndAct();	// Check if VRAM maximum bytes have been reached and delete data if needed	// Check if VRAM maximum bytes have been reached and delete data if needed
 	_root_node->Draw(planes, camera_pos);
 }
 
@@ -43,6 +45,8 @@ void Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
 		std::cerr << "[OCTREE | WARNING] No nodes found in metadata bin file: " << meta_path << std::endl;
 		return;
 	}
+	else
+		std::cout << "[OCTREE | INFO] Number of nodes: " << num_nodes << std::endl;
 	
 	std::queue<OctreeNode*> node_queue;
 	
@@ -206,12 +210,13 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
 	// Check if buffer is ready to be drawn
 	if (_state == PointBufferState::READY_IN_VRAM)		// If buffer inside VRAM just render it
 	{
-		if (isInsideFrustrum(planes) && levelOfDetail(camera_pos))
+		bool insideFrustrum = isInsideFrustrum(planes);		// Check if node box inside frustrum
+		_priority_level = calculatePriorityLevel(camera_pos, insideFrustrum);	// Update priority level
+		if (insideFrustrum && levelOfDetail(camera_pos))
 		{
 			glBindVertexArray(VAO);
 			glDrawArrays(GL_POINTS, 0, _num_points);
 			glBindVertexArray(0);
-			VRAMManager::GetInstance().UpdateNode(this);
 		}
 
 		for (int i = 0; i < 8; i++)
@@ -224,10 +229,13 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos)
 
 void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos)
 {
-	if (isInsideFrustrum(planes) && levelOfDetail(camera_pos))
+	/*if (isInsideFrustrum(planes) && levelOfDetail(camera_pos))
 		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 0.0, 1.0, 0.0);
 	else
-		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 1.0, 0.0, 0.0);
+		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 1.0, 0.0, 0.0);*/
+	float priority = calculatePriorityLevel(camera_pos, isInsideFrustrum(planes));
+	glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), priority*0.01, 100.0/priority, 0.0);
+
 
 	glm::mat4 insideModel = glm::mat4(1.0f);
 	insideModel = glm::translate(insideModel, _center);
@@ -260,9 +268,6 @@ void OctreeNode::InitGraphicBuffers()
 	// Specify how to read Point colors in shader
     glEnableVertexAttribArray(1);	
     glVertexAttribPointer(1, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(point_data_t), (void*)offsetof(point_data_t, color));
-
-    std::cout << "[VBO DEBUG OCTREE | " << node_id << "] Sizeof Vertex Struct : " << sizeof(point_data_t) << " bytes." << std::endl;
-    std::cout << "[VBO DEBUG OCTREE | " << node_id << "] Total Buffer Size: " << (points.size() * sizeof(point_data_t) / 1024.0f) << " Kbytes." << std::endl;
 
     glBindVertexArray(0);	
 
@@ -351,6 +356,13 @@ bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 	max_level = MAX_OCTREE_LEVEL - max_level;		// If further LOD level is smaller
 
 	return _level <= max_level;
+}
+
+float OctreeNode::calculatePriorityLevel(glm::vec3 camera_pos, bool insideFrustrum)
+{
+	float prio_level = (_level+1) * glm::distance(camera_pos, _center);
+	if (!insideFrustrum) prio_level *= 10.0f;
+	return prio_level;
 }
 
 

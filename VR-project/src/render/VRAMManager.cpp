@@ -3,16 +3,10 @@
 
 void VRAMManager::RegisterNode(OctreeNode* node)
 {
-	_lru_list.push_back(node);
-	node->lru_iterator = --_lru_list.end();		// Store iterator inside node to move it in O(1)
+	_priority_vector.push_back(node);
 	_current_bytes += node->GetNumPoints() * sizeof(point_data_t);
 }
 
-
-void VRAMManager::UpdateNode(OctreeNode* node)
-{
-	_lru_list.splice(_lru_list.end(), _lru_list, node->lru_iterator);
-}
 
 
 
@@ -20,22 +14,20 @@ void VRAMManager::CheckAndAct()
 {
 	if (_current_bytes < _max_bytes) return;
 
+	// Sort nodes vector by priority
+	std::sort(_priority_vector.begin(), _priority_vector.end(), 
+        [](OctreeNode* a, OctreeNode* b) { 
+            return a->GetPriorityLevel() > b->GetPriorityLevel(); // Los de mayor score (peores) van al principio
+        });
+
 	while (_current_bytes > _max_bytes)
 	{
-		bool node_deleted = deleteOldest();
-		if (!node_deleted) return;		// No more nodes to delete (unable to reduce more the data bytes in VRAM)
+		if (_priority_vector.empty()) return;	// No more nodes to delete (unable to reduce more the data bytes in VRAM)
+
+		OctreeNode* front_node = std::move(_priority_vector.front());
+		front_node->DeleteNodeVRAMData();		// Delete node's VRAM data
+		_current_bytes -= front_node->GetNumPoints() * sizeof(point_data_t);
+		_priority_vector.erase(_priority_vector.begin());		// Delete node from VRAM nodes
 	}
 }
 
-bool VRAMManager::deleteOldest()
-{
-	if (_lru_list.empty()) return false;
-
-	// Delete first node in list
-	OctreeNode* oldest_node = _lru_list.front();
-	oldest_node->DeleteNodeVRAMData();
-	_current_bytes -= oldest_node->GetNumPoints() * sizeof(point_data_t);
-	
-	_lru_list.pop_front();		// Delete it from list	
-	return true;
-}

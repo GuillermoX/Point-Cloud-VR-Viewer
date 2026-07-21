@@ -48,9 +48,6 @@ public:
 	std::unique_ptr<Shader> debug_shader;
 	std::string node_id;
 	
-	//Iterator used in VRAMManager (temporal)
-	std::list<OctreeNode*>::iterator lru_iterator;
-
 	// Constructor that just copies center and half_node_size
 	OctreeNode(NodeMetadata& metadata, std::string& points_path);
 
@@ -64,6 +61,7 @@ public:
 	OctreeNode* GetSubnode(unsigned int index);
 	void DeleteNodeVRAMData();
 	size_t GetNumPoints() { return _num_points; }
+	float GetPriorityLevel() { return _priority_level;  }
 
 private:
 	glm::vec3 _center;
@@ -80,10 +78,12 @@ private:
 	unsigned int VBO, VAO;
 	unsigned int debug_VBO, debug_VAO;
 	std::atomic<PointBufferState> _state{ PointBufferState::EMPTY };
+	float _priority_level;	// Punctuation that determinates the priority to don't be deleted from VRAM
 	
 
 	bool isInsideFrustrum(plane_t planes[6]);
 	bool levelOfDetail(glm::vec3 camera_pos);
+	float calculatePriorityLevel(glm::vec3 camera_pos, bool insideFrustrum);
 
 };
 
