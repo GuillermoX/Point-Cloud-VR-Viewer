@@ -20,7 +20,7 @@ public:
 	std::unique_ptr<Octree> octree_ptr;
 	
 	PointCloud(const std::string file_path, size_t max_points, unsigned int grid_res);
-	void Draw(const glm::mat4& view_proj, glm::vec3 camera_pos);
+	void Draw(const glm::mat4& view_proj, glm::vec3 camera_pos, float delta_time, Shader& shader);
 	void Debug(const glm::mat4& vpm, glm::vec3 camera_pos);
 };
 

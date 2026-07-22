@@ -3,6 +3,8 @@ out vec4 FragColor;
 
 in vec3 PointColor; // Comes from Vertex Shader
 
+uniform float fadeAlpha;
+
 void main() {
     // Coordenadas respecto al centro del punto
     vec2 circCoord = gl_PointCoord - vec2(0.5);
@@ -13,6 +15,6 @@ void main() {
         discard;
     }
 
-    FragColor = vec4(PointColor, 1.0);
+    FragColor = vec4(PointColor, fadeAlpha);
 
 }

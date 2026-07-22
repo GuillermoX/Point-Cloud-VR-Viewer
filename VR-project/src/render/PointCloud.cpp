@@ -34,9 +34,9 @@ PointCloud::PointCloud(const std::string file_path, size_t max_points, unsigned 
 
 }
 
-void PointCloud::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos)
+void PointCloud::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos, float delta_time, Shader& shader)
 {
-    octree_ptr->Draw(view_proj, camera_pos);
+    octree_ptr->Draw(view_proj, camera_pos, delta_time, shader);
 }
 
 void PointCloud::Debug(const glm::mat4& vpm, glm::vec3 camera_pos)

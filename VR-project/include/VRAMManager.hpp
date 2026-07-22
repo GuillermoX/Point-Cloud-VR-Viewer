@@ -6,7 +6,9 @@
 #define KB * 1024
 #define MB KB * 1024
 #define GB MB * 1024
-#define MAX_VRAM_BYTES 1.5f GB
+#define MAX_VRAM_BYTES 800 MB
+#define THRESHOLD_LOW 0.90
+#define THRESHOLD_HIGH 0.95
 
 class OctreeNode;	// Forward Declaration of OctreeNode to avoid circular dependencies with Octree.hpp
 
@@ -16,6 +18,7 @@ public:
 	// Register node into the list when it loades data to VRAM
 	void RegisterNode(OctreeNode* node);
 	void CheckAndAct();
+	float CalculateVRAMPressure();
 
 	static VRAMManager& GetInstance()
 	{

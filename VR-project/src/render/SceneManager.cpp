@@ -253,7 +253,7 @@ void SceneManager::ExecuteRenderLoop()
     
                 glm::mat4 vpm = projection * view * model;
                 cameraPosition = glm::inverse(model) * glm::vec4(cameraPosition, 1.0);
-                point_cloud->Draw(vpm, cameraPosition);
+                point_cloud->Draw(vpm, cameraPosition, _timing.deltaTime, currentShader);
                 if (_scene_config.octree_debug_enabled)
                     point_cloud->Debug(vpm, cameraPosition);
             }
