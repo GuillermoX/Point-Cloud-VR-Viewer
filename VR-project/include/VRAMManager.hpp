@@ -6,7 +6,7 @@
 #define KB * 1024
 #define MB KB * 1024
 #define GB MB * 1024
-#define MAX_VRAM_BYTES 1 GB
+#define MAX_VRAM_BYTES 6ULL GB
 #define THRESHOLD_LOW 0.90
 #define THRESHOLD_HIGH 0.95
 

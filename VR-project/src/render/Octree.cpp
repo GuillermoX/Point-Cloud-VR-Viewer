@@ -6,6 +6,8 @@ Octree::Octree(std::string& meta_path, std::string& points_path)
 	loadBinaryOctree(meta_path, points_path);
 	std::cout << "[OCTREE | INFO] Octree structure loaded from binary file: " << meta_path << std::endl;
 	std::cout << "[OCTREE | INFO] Using octree points binary file: " << points_path << std::endl;
+	float size = _root_node->GetHalfSize() * 2.0f;
+	std::cout << "[OCTREE | INFO] Octree box dimension: " << size << " x " << size << std::endl;
 	
 	// Initialize LoadDataManager
 	LoadDataManager::Init(points_path, NUM_WORKERS);
@@ -195,14 +197,6 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 		// Check if node should be rendered and fade in depending of LOD
 		if (levelOfDetail(camera_pos))
 		{
-			// If last frame wasn't visible start fade
-			if (!_last_frame_active)
-			{
-				startFade();
-				_last_frame_active = true;
-			}
-			else     // If was visible just update fade alpha
-				updateFade(delta_time);
 
 			// Check if buffer ready to be uploaded to VRAM
 			if (_state == PointBufferState::READY_TO_LOAD_VRAM)	// If buffer in RAM buf not VRAM load it to GPU
@@ -227,21 +221,34 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 			// Check if buffer is ready to be drawn
 			if (_state == PointBufferState::READY_IN_VRAM)		// If buffer inside VRAM just render it
 			{
+				// If last frame wasn't visible start fade
+				if (!_last_frame_active)
+				{
+					startFade();
+					_last_frame_active = true;
+				}
+				else     // If was visible just update fade alpha
+					updateFade(delta_time);
+
 				glUniform1f(glGetUniformLocation(shader.ID, "fadeAlpha"), _fade_alpha);
 				glBindVertexArray(VAO);
 				glDrawArrays(GL_POINTS, 0, _num_points);
 				glBindVertexArray(0);
 
-				for (int i = 0; i < 8; i++)
-				{
-					if (_subnodes[i] != nullptr)
-						_subnodes[i]->Draw(planes, camera_pos, delta_time, shader);
-				}
 			}
+
 		}
 		else
 		{
 			_last_frame_active = false;
+		}
+
+
+		// Always go to lower levels since this should have been drawn
+		for (int i = 0; i < 8; i++)
+		{
+			if (_subnodes[i] != nullptr)
+				_subnodes[i]->Draw(planes, camera_pos, delta_time, shader);
 		}
 	}
 }
@@ -371,12 +378,12 @@ bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 {
 	float distance = glm::distance(camera_pos, _center);
 
-	float safe_distance = 5.0f; // Los primeros 5 metros son intocables
+	/*float safe_distance = 5.0f; // Los primeros 5 metros son intocables
 	float alpha = 0.05 * VRAMManager::GetInstance().CalculateVRAMPressure(); // Factor de castigo según VRAM
 
 	float excess_distance = std::max(0.0f, distance - safe_distance);
 
-	distance = distance + (alpha * excess_distance * excess_distance);
+	distance = distance + (alpha * excess_distance * excess_distance) * (_level + 1);*/
 
 	unsigned int max_level = distance / (MIN_LOD_DISTANCE / (MAX_OCTREE_LEVEL + 1));
 	if (max_level > MAX_OCTREE_LEVEL) max_level = MAX_OCTREE_LEVEL;
@@ -387,8 +394,8 @@ bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 
 float OctreeNode::calculatePriorityLevel(glm::vec3 camera_pos, bool insideFrustrum)
 {
-	float prio_level = (_level+1) * glm::distance(camera_pos, _center);
-	if (!insideFrustrum) prio_level *= 10.0f;
+	float prio_level = (_level + 1) * glm::distance(camera_pos, _center);
+	//if (!insideFrustrum) prio_level *= 10.0f;
 	return prio_level;
 }
 
@@ -404,14 +411,13 @@ void OctreeNode::startFade()
 void OctreeNode::updateFade(float delta_time)
 {
 	if (_is_fading) {
-			// It takes 0.25 secons to appear
-			_fade_alpha += delta_time;
-            
-            if (_fade_alpha >= 1.0f) {
-                _fade_alpha = 1.0f;
-                _is_fading = false; // Transición terminada
-            }
-        }
+		_fade_alpha += delta_time;
+		
+		if (_fade_alpha >= 1.0f) {
+			_fade_alpha = 1.0f;
+			_is_fading = false; // Transición terminada
+		}
+	}
 }
 
 

@@ -22,7 +22,7 @@ void VRAMManager::CheckAndAct()
 			return a->GetPriorityLevel() > b->GetPriorityLevel();
 		});
 
-	while (_current_bytes > _max_bytes*THRESHOLD_HIGH)
+	while (_current_bytes > _max_bytes*THRESHOLD_LOW)
 	{
 		if (_priority_vector.empty()) return;	// No more nodes to delete (unable to reduce more the data bytes in VRAM)
 

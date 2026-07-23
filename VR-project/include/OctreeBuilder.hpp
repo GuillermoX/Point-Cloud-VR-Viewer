@@ -17,7 +17,7 @@
 #include "LASReader.hpp" 
 #include "Shader.hpp"
 
-#define MAX_OCTREE_LEVEL	4			// From 0 to MAX_OCTREE_LEVEL
+#define MAX_OCTREE_LEVEL	6			// From 0 to MAX_OCTREE_LEVEL
 #define NODE_ID_LENGHT		16
 
 
