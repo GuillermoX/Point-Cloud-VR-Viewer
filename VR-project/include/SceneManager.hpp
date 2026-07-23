@@ -44,74 +44,107 @@ struct timing_t
 struct scene_config_t
 {
 	bool vr_enabled;
-	bool wire_frame_enabled = false;
 	bool flying_enabled = false;
 	bool octree_debug_enabled = false;
 };
 
-// Struct to check if in frame before a key was also pressed
+/**
+ * @brief Used to check if in previous frame a key was pressed
+ */
 struct key_control_t
 {
 	bool octree_debug_key = false;
 };
 
+
+/**
+ * @brief Manages the scene elements and the render loop
+ */
 class SceneManager
 {
 public:
-	std::unordered_map<std::string, Shader> shaders;
-	std::unordered_map<std::string, Model> models;
-	PointCloud* point_cloud;
-
+	std::unordered_map<std::string, Shader> shaders;		// Shaders
+	std::unordered_map<std::string, Model> models;			// Models
+	PointCloud* point_cloud;								// Point Cloud object
+	
+	/**
+	 * @brief SceneManager constructor
+	 * @param scr_width: Screen Width
+	 * @param scr_height: Screen Height
+	 * @param vr_enabled: Specify if the scene is rendered in VR
+	 */
 	SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled = false);
+
+	/**
+	 * @brief SceneManager destructor
+	 * @details Destroys GLFW context with all resources in it
+	 */
 	~SceneManager();
 
 	/**
-	* @brief Adds a Model to the SceneManager
-	* @return 0 -> added model correctly
-			  -1 -> error while adding shader
-	*/
-	unsigned char AddShader(Shader& shader, std::string shader_id);
+	 * @brief Adds a Shader to the SceneManager
+	 */
+	void AddShader(Shader& shader, std::string shader_id);
 
 	/**
-	* @brief Adds a Model to the SceneManager
-	* @return 0 -> added model correctly
-			  -1 -> error while adding model
-	*/
-	unsigned char AddModel(Model& model, std::string model_id);
+	 * @brief Adds a Model to the SceneManager
+	 */
+	void AddModel(Model& model, std::string model_id);
 
-	unsigned char AddPointCloud(PointCloud& point_cloud);
-
+	/**
+	 * @brief Adds a PointCloud to the SceneManager
+	 */
+	void AddPointCloud(PointCloud& point_cloud);
+	
+	/**
+	 * @brief Renders all elements in scene 
+	 * @details Executes the loop until the exit key is pressed.
+	 *          If VR is enabled it renders two times per frame (one render per eye)
+	 */
 	void ExecuteRenderLoop();
 
-	bool SceneIsValid();
-
-	// Scene configuration manager
+	/**
+	 * @brief Enables or disables the flying mode
+	 */
 	void FlyingMode(bool active);
 
 private:
-	screen_manager_t _screen;
-	timing_t _timing;
-	scene_config_t _scene_config;
-	key_control_t _keys_state;
-	bool _scene_valid = true;
+	screen_manager_t _screen;							// Screen Manager
+	timing_t _timing;									// Timing information
+	scene_config_t _scene_config;						// Scene configuration
+	key_control_t _keys_state;							// Key states
 
-	std::unique_ptr<Camera> _camera_ptr;
-	std::unique_ptr<VRManager> _vr_manager_ptr;
+	std::unique_ptr<Camera> _camera_ptr;				// Non VR camera object
+	std::unique_ptr<VRManager> _vr_manager_ptr;			// VR manager (includes camera managment and functions)
 
-	GLFWwindow* _window;
+	GLFWwindow* _window;								// GLFW window context
 
-	GLuint _vr_FBO;
-	GLuint _vr_depth_buffer;
-
+	GLuint _vr_FBO;										// VR frame buffer (two layers, one per eye)
+	GLuint _vr_depth_buffer;							// VR depth buffer
+	
+	/**
+	 * @brief Process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+	 * @details If VR is enabled it processes joystick movement. If not, it processes input from keyboard.
+	 */
 	void processInput();
 	
-	// GLFW Callback functions
+	/**
+	 * @brief GLFW Framebuffer Size Callback Function
+	 * @details It executes when screen is resized
+	 */
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
+	/**
+	 * @brief GLFW Mouse Callback Function
+	 * @details It executes when mouse is moved
+	 */
 	static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
+	/**
+	 * @brief GLFW Scroll Callback Function
+	 * @details It executes when mouse scroll moves
+	 */
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 };
-
-
-
 
 #endif

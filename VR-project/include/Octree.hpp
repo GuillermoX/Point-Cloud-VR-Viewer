@@ -23,7 +23,7 @@
 #include "LoadDataManager.hpp"
 #include "VRAMManager.hpp"
 
-#define MIN_LOD_DISTANCE 100.0		// Distance where the LOD is minimum
+#define MIN_LOD_DISTANCE 500.0		// Distance where the LOD is minimum
 
 
 

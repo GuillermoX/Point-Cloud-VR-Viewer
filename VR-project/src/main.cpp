@@ -28,14 +28,10 @@ int main(int argc, char** argv)
 
     // Build and compile shaders
     Shader ourShader("assets/shaders/point_cloud.vert", "assets/shaders/point_cloud.frag");
-    scene_manager.AddShader(ourShader, "main_shader");
-    
-    // Load Models
-    /* Model ourModel("assets/objects/backpack/backpack.obj");
-    scene_manager.AddModel(ourModel, "main_model");*/
+    scene_manager.AddShader(ourShader, "point_cloud");    
 
     // Load Cloud Point
-    PointCloud pointCloud("assets/cloud-points/aula.las", max_points, 256);
+    PointCloud pointCloud("assets/cloud-points/santa_maria.las", max_points, 256);
     scene_manager.AddPointCloud(pointCloud);
     
     scene_manager.ExecuteRenderLoop();

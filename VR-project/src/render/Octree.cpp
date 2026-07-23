@@ -17,7 +17,7 @@ void Octree::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos, float delta_
 {
 	plane_t planes[6];
 	getFrustrumPlanes(view_proj, planes);
-	VRAMManager::GetInstance().CheckAndAct();	// Check if VRAM maximum bytes have been reached and delete data if needed	// Check if VRAM maximum bytes have been reached and delete data if needed
+	VRAMManager::GetInstance().CheckAndAct();	// Check if VRAM maximum bytes have been reached and delete data if needed
 	_root_node->Draw(planes, camera_pos, delta_time, shader);
 }
 
@@ -372,7 +372,7 @@ bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 	float distance = glm::distance(camera_pos, _center);
 
 	float safe_distance = 5.0f; // Los primeros 5 metros son intocables
-	float alpha = VRAMManager::GetInstance().CalculateVRAMPressure(); // Factor de castigo según VRAM
+	float alpha = 0.05 * VRAMManager::GetInstance().CalculateVRAMPressure(); // Factor de castigo según VRAM
 
 	float excess_distance = std::max(0.0f, distance - safe_distance);
 
