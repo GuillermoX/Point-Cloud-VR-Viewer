@@ -23,7 +23,7 @@ int main(int argc, char** argv)
     CLI11_PARSE(app, argc, argv);
 
 
-    SceneManager scene_manager(1920, 1080, vr_mode_enabled);
+    SceneManager scene_manager(800, 600, vr_mode_enabled);
     scene_manager.FlyingMode(flying_mode_enabled);
 
     // Build and compile shaders

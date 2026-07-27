@@ -23,7 +23,7 @@
 #include "LoadDataManager.hpp"
 #include "VRAMManager.hpp"
 
-#define MIN_LOD_DISTANCE 150.0		// Distance where the LOD is minimum
+#define MIN_LOD_DISTANCE 80.0		// Distance where the LOD is minimum
 
 
 
@@ -63,6 +63,8 @@ public:
 	size_t GetNumPoints() { return _num_points; }
 	float GetPriorityLevel() { return _priority_level;  }
 	float GetHalfSize() { return _half_size;  }
+	std::atomic<PointBufferState>& GetState();
+	
 
 private:
 	glm::vec3 _center;

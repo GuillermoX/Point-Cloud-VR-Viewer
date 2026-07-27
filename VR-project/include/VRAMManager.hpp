@@ -2,11 +2,12 @@
 #define VRAM_MANAGER_H
 
 #include <vector>
+#include "LASReader.hpp"
 
 #define KB * 1024
 #define MB KB * 1024
 #define GB MB * 1024
-#define MAX_VRAM_BYTES 6ULL GB
+#define MAX_VRAM_BYTES 1ULL GB
 #define THRESHOLD_LOW 0.90
 #define THRESHOLD_HIGH 0.95
 
@@ -19,6 +20,7 @@ public:
 	void RegisterNode(OctreeNode* node);
 	void CheckAndAct();
 	float CalculateVRAMPressure();
+	bool CanLoadToVRAM(std::vector<point_data_t>& points, float priority);
 
 	static VRAMManager& GetInstance()
 	{
@@ -35,6 +37,8 @@ private:
 	VRAMManager() {};// Make constructor private
 	VRAMManager(const VRAMManager&) = delete;	// Delete copy constructor
 	VRAMManager& operator=(const VRAMManager&) = delete;	// Delete asignation operator
+
+	void deleteFirstNode();
 
 	
 };

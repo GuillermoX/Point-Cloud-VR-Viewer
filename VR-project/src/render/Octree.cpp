@@ -201,17 +201,20 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 			// Check if buffer ready to be uploaded to VRAM
 			if (_state == PointBufferState::READY_TO_LOAD_VRAM)	// If buffer in RAM buf not VRAM load it to GPU
 			{
-				glBindVertexArray(VAO);
-				glBindBuffer(GL_ARRAY_BUFFER, VBO);
-				glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(point_data_t), points.data(), GL_STATIC_DRAW);
-				glBindVertexArray(0);
-				glBindBuffer(GL_ARRAY_BUFFER, 0);
-				_state.store(PointBufferState::READY_IN_VRAM, std::memory_order_release);
-				points.clear();		// Delete point buffer from RAM because is already stored in VRAM
-				VRAMManager::GetInstance().RegisterNode(this);
+				if (VRAMManager::GetInstance().CanLoadToVRAM(points, _priority_level))
+				{
+					glBindVertexArray(VAO);
+					glBindBuffer(GL_ARRAY_BUFFER, VBO);
+					glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(point_data_t), points.data(), GL_STATIC_DRAW);
+					glBindVertexArray(0);
+					glBindBuffer(GL_ARRAY_BUFFER, 0);
+					_state.store(PointBufferState::READY_IN_VRAM, std::memory_order_release);
+					points.clear();		// Delete point buffer from RAM because is already stored in VRAM
+					VRAMManager::GetInstance().RegisterNode(this);
+				}
 			}
 			else if (_state == PointBufferState::EMPTY)			// If buffer empty (not in VRAM nor RAM)
-			{
+			{	
 				points.resize(_num_points);		// Resize to prepare buffer 
 				LoadDataManager& data_manager = LoadDataManager::GetInstance();		// Get singleton instance of LoadDataManager
 				// Add the load buffer task to the LoadDataManager instance
@@ -235,6 +238,10 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 				glDrawArrays(GL_POINTS, 0, _num_points);
 				glBindVertexArray(0);
 
+			}
+			else
+			{
+				_last_frame_active = false;
 			}
 
 		}
@@ -351,6 +358,11 @@ void OctreeNode::DeleteNodeVRAMData()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	_state.store(PointBufferState::EMPTY, std::memory_order_release);
 	
+}
+
+std::atomic<PointBufferState>& OctreeNode::GetState()
+{
+	return _state;
 }
 
 bool OctreeNode::isInsideFrustrum(plane_t planes[6])
