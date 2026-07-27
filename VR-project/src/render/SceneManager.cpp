@@ -123,7 +123,7 @@ void SceneManager::ExecuteRenderLoop()
         float currentFrame = static_cast<float>(glfwGetTime());
         _timing.deltaTime = currentFrame - _timing.lastFrame;
         _timing.lastFrame = currentFrame;
-        std::cout << "[SCENEMANAGER | INFO] Framerate: " << 1.0 / _timing.deltaTime << std::endl;
+        //std::cout << "[SCENEMANAGER | INFO] Framerate: " << 1.0 / _timing.deltaTime << std::endl;
 
 
         // Always Process Input
