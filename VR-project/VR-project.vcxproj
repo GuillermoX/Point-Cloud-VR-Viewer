@@ -19,6 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="include\extern\imgui\imgui.cpp" />
+    <ClCompile Include="include\extern\imgui\imgui_demo.cpp" />
+    <ClCompile Include="include\extern\imgui\imgui_draw.cpp" />
+    <ClCompile Include="include\extern\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="include\extern\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="include\extern\imgui\imgui_tables.cpp" />
+    <ClCompile Include="include\extern\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\extern\glad.c" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\render\LASReader.cpp" />
@@ -72,6 +79,14 @@
     <ClInclude Include="include\extern\CLI\TypeTools.hpp" />
     <ClInclude Include="include\extern\CLI\Validators.hpp" />
     <ClInclude Include="include\extern\CLI\Version.hpp" />
+    <ClInclude Include="include\extern\imgui\imconfig.h" />
+    <ClInclude Include="include\extern\imgui\imgui.h" />
+    <ClInclude Include="include\extern\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="include\extern\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="include\extern\imgui\imgui_internal.h" />
+    <ClInclude Include="include\extern\imgui\imstb_rectpack.h" />
+    <ClInclude Include="include\extern\imgui\imstb_textedit.h" />
+    <ClInclude Include="include\extern\imgui\imstb_truetype.h" />
     <ClInclude Include="include\extern\stb_image.h" />
     <ClInclude Include="include\LASReader.hpp" />
     <ClInclude Include="include\LoadDataManager.hpp" />

@@ -91,3 +91,9 @@ void LoadDataManager::AddLoadVectorTask(char* vector, uint64_t points, uint64_t 
 	// Wake up one thread to process the task
 	_cv.notify_one();
 }
+
+bool LoadDataManager::CanAddTask()
+{
+	std::lock_guard<std::mutex> lock(_mutex);
+	return _task_queue.size() <= MAX_TASKS_PENDING;	
+}

@@ -10,6 +10,7 @@
 #include <queue>
 
 #define NUM_WORKERS 3
+#define MAX_TASKS_PENDING 5
 
 struct data_task_t
 {
@@ -69,6 +70,7 @@ public:
     }
 
 	void AddLoadVectorTask(char* vector, uint64_t points, uint64_t byte_offset, std::atomic<PointBufferState>& state);
+	bool CanAddTask();
 
 };
 

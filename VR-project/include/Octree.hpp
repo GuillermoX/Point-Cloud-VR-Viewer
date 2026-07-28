@@ -23,7 +23,7 @@
 #include "LoadDataManager.hpp"
 #include "VRAMManager.hpp"
 
-#define MIN_LOD_DISTANCE 80.0		// Distance where the LOD is minimum
+#define MIN_LOD_DISTANCE 110.0		// Distance where the LOD is minimum
 
 
 
@@ -74,7 +74,7 @@ private:
 	unsigned int _level;
 	std::string _points_binary_path;
 
-	std::vector<point_data_t> points;
+	point_data_t* _points_ptr;	// Bridge buffer between disk and VRAM
 	
 	std::unique_ptr<OctreeNode> _subnodes[8];
 

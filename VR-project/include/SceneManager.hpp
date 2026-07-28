@@ -18,6 +18,10 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include <extern/imgui/imgui.h>		// GUI Library
+#include <extern/imgui/imgui_impl_glfw.h>		
+#include <extern/imgui/imgui_impl_opengl3.h>		
+
 
 #include "Camera.hpp"
 #include "Shader.hpp"
@@ -46,6 +50,7 @@ struct scene_config_t
 	bool vr_enabled;
 	bool flying_enabled = false;
 	bool octree_debug_enabled = false;
+	bool hud_debug_enabled = false;
 };
 
 /**
@@ -54,6 +59,7 @@ struct scene_config_t
 struct key_control_t
 {
 	bool octree_debug_key = false;
+	bool hud_debug_key = false;
 };
 
 
@@ -127,6 +133,16 @@ private:
 	 * @details If VR is enabled it processes joystick movement. If not, it processes input from keyboard.
 	 */
 	void processInput();
+
+	/**
+	 * @brief Process debug option keys
+	 */
+	void processDebugOption(unsigned int key, bool& option, bool& debug_key);
+
+	/**
+	 * @brief Renders debug info in a HUD handled by ImGui library
+	 */
+	void renderDebugHudInfo();
 	
 	/**
 	 * @brief GLFW Framebuffer Size Callback Function
@@ -145,6 +161,7 @@ private:
 	 * @details It executes when mouse scroll moves
 	 */
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
 };
 
 #endif

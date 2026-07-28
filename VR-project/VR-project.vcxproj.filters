@@ -54,6 +54,27 @@
     <ClCompile Include="src\render\VRAMManager.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
+    <ClCompile Include="include\extern\imgui\imgui.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="include\extern\imgui\imgui_demo.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="include\extern\imgui\imgui_draw.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="include\extern\imgui\imgui_impl_glfw.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="include\extern\imgui\imgui_impl_opengl3.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="include\extern\imgui\imgui_tables.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="include\extern\imgui\imgui_widgets.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\shader.frag" />
@@ -189,6 +210,30 @@
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
     <ClInclude Include="include\VRAMManager.hpp">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\extern\imgui\imconfig.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\extern\imgui\imgui.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\extern\imgui\imgui_impl_glfw.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\extern\imgui\imgui_impl_opengl3.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\extern\imgui\imgui_internal.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\extern\imgui\imstb_rectpack.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\extern\imgui\imstb_textedit.h">
+      <Filter>Archivos de encabezado</Filter>
+    </ClInclude>
+    <ClInclude Include="include\extern\imgui\imstb_truetype.h">
       <Filter>Archivos de encabezado</Filter>
     </ClInclude>
   </ItemGroup>

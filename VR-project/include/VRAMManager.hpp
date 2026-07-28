@@ -20,8 +20,7 @@ public:
 	void RegisterNode(OctreeNode* node);
 	void CheckAndAct();
 	float CalculateVRAMPressure();
-	bool CanLoadToVRAM(std::vector<point_data_t>& points, float priority);
-
+	bool CanLoadToVRAM(size_t num_points, float priority);
 	static VRAMManager& GetInstance()
 	{
 		static VRAMManager vram_manager;	// Creates only one instance although GetInstance called multiple times

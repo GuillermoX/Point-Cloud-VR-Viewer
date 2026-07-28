@@ -201,24 +201,27 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 			// Check if buffer ready to be uploaded to VRAM
 			if (_state == PointBufferState::READY_TO_LOAD_VRAM)	// If buffer in RAM buf not VRAM load it to GPU
 			{
-				if (VRAMManager::GetInstance().CanLoadToVRAM(points, _priority_level))
+				if (VRAMManager::GetInstance().CanLoadToVRAM(_num_points, _priority_level))
 				{
 					glBindVertexArray(VAO);
 					glBindBuffer(GL_ARRAY_BUFFER, VBO);
-					glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(point_data_t), points.data(), GL_STATIC_DRAW);
+					glBufferData(GL_ARRAY_BUFFER, _num_points * sizeof(point_data_t), _points_ptr, GL_STATIC_DRAW);
 					glBindVertexArray(0);
 					glBindBuffer(GL_ARRAY_BUFFER, 0);
 					_state.store(PointBufferState::READY_IN_VRAM, std::memory_order_release);
-					points.clear();		// Delete point buffer from RAM because is already stored in VRAM
+					free(_points_ptr);		// Delete point buffer pointer so the data inside is deleted from RAM
 					VRAMManager::GetInstance().RegisterNode(this);
 				}
 			}
 			else if (_state == PointBufferState::EMPTY)			// If buffer empty (not in VRAM nor RAM)
 			{	
-				points.resize(_num_points);		// Resize to prepare buffer 
 				LoadDataManager& data_manager = LoadDataManager::GetInstance();		// Get singleton instance of LoadDataManager
-				// Add the load buffer task to the LoadDataManager instance
-				data_manager.AddLoadVectorTask(reinterpret_cast<char*>(points.data()), _num_points, _byte_offset, _state);
+				if (data_manager.CanAddTask())
+				{
+					_points_ptr = (point_data_t*)malloc(_num_points * sizeof(point_data_t));
+					// Add the load buffer task to the LoadDataManager instance
+					data_manager.AddLoadVectorTask(reinterpret_cast<char*>(_points_ptr), _num_points, _byte_offset, _state);
+				}
 			}
 
 			// Check if buffer is ready to be drawn
@@ -262,12 +265,8 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 
 void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos)
 {
-	/*if (isInsideFrustrum(planes) && levelOfDetail(camera_pos))
-		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 0.0, 1.0, 0.0);
-	else
-		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 1.0, 0.0, 0.0);*/
 	float priority = calculatePriorityLevel(camera_pos, isInsideFrustrum(planes));
-	glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), priority*0.01, 100.0/priority, 0.0);
+	glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), priority*0.0001, 10000.0/priority, 0.0);
 
 
 	glm::mat4 insideModel = glm::mat4(1.0f);
@@ -390,24 +389,28 @@ bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 {
 	float distance = glm::distance(camera_pos, _center);
 
-	/*float safe_distance = 5.0f; // Los primeros 5 metros son intocables
-	float alpha = 0.05 * VRAMManager::GetInstance().CalculateVRAMPressure(); // Factor de castigo según VRAM
-
-	float excess_distance = std::max(0.0f, distance - safe_distance);
-
-	distance = distance + (alpha * excess_distance * excess_distance) * (_level + 1);*/
-
-	unsigned int max_level = distance / (MIN_LOD_DISTANCE / (MAX_OCTREE_LEVEL + 1));
+	/*unsigned int max_level = distance / (MIN_LOD_DISTANCE / (MAX_OCTREE_LEVEL + 1));
 	if (max_level > MAX_OCTREE_LEVEL) max_level = MAX_OCTREE_LEVEL;
 	max_level = MAX_OCTREE_LEVEL - max_level;		// If further LOD level is smaller
 
-	return _level <= max_level;
+	return _level <= max_level;*/
+
+	if (distance >= MIN_LOD_DISTANCE) return 0; // Mínimo LOD (Padre raíz)
+    if (distance <= 0.0f) return MAX_OCTREE_LEVEL; // Máximo LOD (Hijo profundo)
+
+    // Normalizamos la distancia entre 0.0 y 1.0
+    float norm_dist = distance / MIN_LOD_DISTANCE;
+
+    // Usamos una función potencia (ej. exp = 2.0) para concentrar los LODs cerca
+    float factor = std::pow(norm_dist, 0.5f); // La raíz cuadrada invierte la curva para dar más peso al inicio
+
+    int lod = static_cast<int>((1.0f - factor) * MAX_OCTREE_LEVEL);
+    return std::clamp(lod, 0, MAX_OCTREE_LEVEL);
 }
 
 float OctreeNode::calculatePriorityLevel(glm::vec3 camera_pos, bool insideFrustrum)
 {
-	float prio_level = (_level + 1) * glm::distance(camera_pos, _center);
-	//if (!insideFrustrum) prio_level *= 10.0f;
+	float prio_level = (_level + 1) * std::pow(glm::distance(camera_pos, _center), 2);
 	return prio_level;
 }
 

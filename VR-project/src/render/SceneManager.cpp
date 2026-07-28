@@ -89,6 +89,14 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
 
     // Add this object to GLFW User Pointer to be used in callbacks
     glfwSetWindowUserPointer(_window, this);
+
+
+    // Debug ImGui lib context creator
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGui_ImplGlfw_InitForOpenGL(_window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");     // GLSL version
 }
 
 SceneManager::~SceneManager()
@@ -123,7 +131,7 @@ void SceneManager::ExecuteRenderLoop()
         float currentFrame = static_cast<float>(glfwGetTime());
         _timing.deltaTime = currentFrame - _timing.lastFrame;
         _timing.lastFrame = currentFrame;
-        //std::cout << "[SCENEMANAGER | INFO] Framerate: " << 1.0 / _timing.deltaTime << std::endl;
+        std::cout << "[SCENEMANAGER | INFO] Framerate: " << 1.0 / _timing.deltaTime << std::endl;
 
 
         // Always Process Input
@@ -213,7 +221,10 @@ void SceneManager::ExecuteRenderLoop()
                 if (_scene_config.octree_debug_enabled)     // Debug visualization of the Octree boxes
                     point_cloud->Debug(vpm, cameraPosition);
             }
-
+            
+            if (_scene_config.hud_debug_enabled)
+                renderDebugHudInfo();
+    
             // Finish the frame in VR mode or screen mode
             if (_scene_config.vr_enabled)
                 _vr_manager_ptr->FinishFrame();
@@ -244,12 +255,10 @@ void SceneManager::FlyingMode(bool active)
 void SceneManager::processInput()
 {
     if (glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(_window, true);
-    
-    bool octree_debug_key_pressed = glfwGetKey(_window, GLFW_KEY_B) == GLFW_PRESS;
-    if (octree_debug_key_pressed && !_keys_state.octree_debug_key)
-        _scene_config.octree_debug_enabled = !_scene_config.octree_debug_enabled;
-    _keys_state.octree_debug_key = octree_debug_key_pressed;
+        glfwSetWindowShouldClose(_window, true);    
+
+    processDebugOption(GLFW_KEY_B, _scene_config.octree_debug_enabled, _keys_state.octree_debug_key);
+    processDebugOption(GLFW_KEY_H, _scene_config.hud_debug_enabled, _keys_state.hud_debug_key);
 
 
     if (_scene_config.vr_enabled)   // If VR mode delegate Input Processing to VR Manager
@@ -271,6 +280,34 @@ void SceneManager::processInput()
     }
 
 }
+
+void SceneManager::processDebugOption(unsigned int key, bool& option, bool& debug_key)
+{ 
+    bool debug_key_pressed = glfwGetKey(_window, key) == GLFW_PRESS;
+    if (debug_key_pressed && !debug_key)
+        option = !option;
+    debug_key = debug_key_pressed;
+}
+
+void SceneManager::renderDebugHudInfo()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	// --- TU HUD ---
+	ImGui::SetNextWindowPos(ImVec2(10, 10)); // Esquina superior izquierda
+	ImGui::Begin("HUD", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground);
+
+	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
+	ImGui::End();
+	// --------------
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
 
 // glfw: Whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------

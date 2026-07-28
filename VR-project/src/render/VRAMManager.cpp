@@ -57,11 +57,11 @@ float VRAMManager::CalculateVRAMPressure() {
 }
 
 
-bool VRAMManager::CanLoadToVRAM(std::vector<point_data_t>& points, float priority)
+bool VRAMManager::CanLoadToVRAM(size_t num_points, float priority)
 {
 	bool write_to_vram = false;
 
-	size_t points_bytes = points.size() * sizeof(point_data_t);
+	size_t points_bytes = num_points * sizeof(point_data_t);
 	// If adding the new node to VRAM the maximum is superpassed try to delete inferior nodes
 	if ((_current_bytes + points_bytes) > _max_bytes * THRESHOLD_HIGH)
 	{

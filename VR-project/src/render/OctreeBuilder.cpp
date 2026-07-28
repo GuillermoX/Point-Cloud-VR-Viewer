@@ -20,13 +20,14 @@ OctreeBuilder::OctreeBuilder(std::vector<point_data_t>& points, glm::vec3& min, 
 	unsigned int quarter_vector = points.size() / 4;
 	unsigned int half_vector = points.size() / 2;
 	unsigned int three_quarters_vector = points.size() - quarter_vector;
-	for (unsigned int i = 0; i < points.size(); i++)
+	unsigned int vector_size = points.size();
+	for (ptrdiff_t i = vector_size-1; i >= 0; i--)
 	{
-		if (i == quarter_vector)
+		if (vector_size - i == quarter_vector)
 			std::cout << "[OCTREE BUILDER | INFO] Loaded 25% of points from raw points data." << std::endl;
-		else if (i == half_vector)
+		else if (vector_size - i == half_vector)
 			std::cout << "[OCTREE BUILDER | INFO] Loaded 50% of points from raw points data." << std::endl;
-		else if (i == three_quarters_vector)
+		else if (vector_size - i == three_quarters_vector)
 			std::cout << "[OCTREE BUILDER | INFO] Loaded 75% of points from raw points data." << std::endl;
 
 		_root_node->AddPoint(points[i]);
@@ -82,6 +83,7 @@ void OctreeBuilder::CreateOctreeBinary(const std::string& metadata_path, const s
             points_file.write(
                 reinterpret_cast<const char*>(node_points.data()), metadata.number_points * sizeof(point_data_t)
             );
+			node_points.empty();
         }
 
 		// Update offset for next node metadata
