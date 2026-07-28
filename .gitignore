@@ -1,4 +1,4 @@
-# --- Binarios de Visual Studio ---
+# --- Visual Studio  Binaries---
 .vs/
 *.user
 *.suo
@@ -23,7 +23,7 @@
 *.manifest
 *.lastbuildstate
 
-# --- Carpetas de salida (Donde Visual Studio compila) ---
+# --- Output directory ---
 x64/
 x86/
 Debug/
@@ -34,5 +34,8 @@ bin/
 build/
 obj/
 
-# --- Cloud Points ----
+# --- Point Clouds ----
 cloud-points/
+
+# --- ImGUI lib configs ----
+imgui.ini
