@@ -12,9 +12,6 @@ void VRAMManager::RegisterNode(OctreeNode* node)
 
 void VRAMManager::CheckAndAct()
 {
-	std::cout << "[VRAMManager | INFO] VRAM usage: " << (_current_bytes / (1024 * 1024)) << " / " << (_max_bytes / (1024 * 1024))
-		<< " MB  |  " << ((float)_current_bytes / (float)_max_bytes)*100.0 << "%" << std::endl;
-
 	if (_current_bytes >= _max_bytes * THRESHOLD_LOW)
 	{
 		// Sort nodes vector by priority (TODO: implement more efficient way to sort, acceptable for hundreds of nodes)

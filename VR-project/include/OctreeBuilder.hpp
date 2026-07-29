@@ -10,6 +10,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include <random>
 #include <array>
 #include <queue>
 #include <iostream>
@@ -17,7 +18,7 @@
 #include "LASReader.hpp" 
 #include "Shader.hpp"
 
-#define MAX_OCTREE_LEVEL	3			// From 0 to MAX_OCTREE_LEVEL
+#define MAX_OCTREE_LEVEL	5			// From 0 to MAX_OCTREE_LEVEL
 #define NODE_ID_LENGHT		16
 
 
@@ -65,6 +66,8 @@ private:
 	float _cell_size;
 	glm::vec3 _min;
 	std::vector<bool> _grid_control;
+	unsigned int _max_points;
+	unsigned int _current_points;
 };
 	
 
@@ -108,6 +111,7 @@ public:
 	void CreateOctreeBinary(const std::string& metadata_path, const std::string& points_path);
 private:
 	std::unique_ptr<OctreeBuilderNode> _root_node;
+	void randomizeVector(std::vector<point_data_t>& points);
 
 };
 

@@ -131,7 +131,6 @@ void SceneManager::ExecuteRenderLoop()
         float currentFrame = static_cast<float>(glfwGetTime());
         _timing.deltaTime = currentFrame - _timing.lastFrame;
         _timing.lastFrame = currentFrame;
-        std::cout << "[SCENEMANAGER | INFO] Framerate: " << 1.0 / _timing.deltaTime << std::endl;
 
 
         // Always Process Input
@@ -295,14 +294,43 @@ void SceneManager::renderDebugHudInfo()
     ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	// --- TU HUD ---
-	ImGui::SetNextWindowPos(ImVec2(10, 10)); // Esquina superior izquierda
-	ImGui::Begin("HUD", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground);
+	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
 
-	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.6f));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
 
-	ImGui::End();
-	// --------------
+	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | 
+							 ImGuiWindowFlags_AlwaysAutoResize | 
+							 ImGuiWindowFlags_NoMove | 
+							 ImGuiWindowFlags_NoSavedSettings | 
+							 ImGuiWindowFlags_NoFocusOnAppearing | 
+							 ImGuiWindowFlags_NoNav;
+
+	ImGui::Begin("HUD", nullptr, flags);
+    
+    float fps = ImGui::GetIO().Framerate;
+    if (fps < 35.0) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+    else if (fps < 55.0) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+    else ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+	ImGui::Text("FPS: %.1f", fps);
+    ImGui::PopStyleColor();
+
+    VRAMManager& vram_manager = VRAMManager::GetInstance();
+    unsigned int current = vram_manager.GetCurrentMB();
+    unsigned int max = vram_manager.GetMaxMB();
+    float usage = ((float)current / (float)max) * 100.0f;
+    if (usage < 50.0) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+    else if (usage < 80.0) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
+    else ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+	ImGui::Text("VRAM: %u/%u MB | %.1f%%", current, max, usage);
+    ImGui::PopStyleColor();
+
+
+    ImGui::End();
+
+	ImGui::PopStyleVar(2);
+	ImGui::PopStyleColor(1);
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

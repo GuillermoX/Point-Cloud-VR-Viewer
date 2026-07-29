@@ -23,7 +23,7 @@
 #include "LoadDataManager.hpp"
 #include "VRAMManager.hpp"
 
-#define MIN_LOD_DISTANCE 110.0		// Distance where the LOD is minimum
+inline unsigned int MAX_LOD_DISTANCE;	 // Distance where the LOD is minimum
 
 
 
@@ -51,9 +51,6 @@ public:
 	// Constructor that just copies center and half_node_size
 	OctreeNode(NodeMetadata& metadata, std::string& points_path);
 
-
-	~OctreeNode();
-	
 	void InitGraphicBuffers();
 	void Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time, Shader& shader);
 	void Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos);
@@ -89,7 +86,7 @@ private:
 	void startFade();
 	void updateFade(float delta_time);
 	bool isInsideFrustrum(plane_t planes[6]);
-	bool levelOfDetail(glm::vec3 camera_pos);
+	unsigned char levelOfDetail(glm::vec3 camera_pos);
 	float calculatePriorityLevel(glm::vec3 camera_pos, bool insideFrustrum);
 
 };

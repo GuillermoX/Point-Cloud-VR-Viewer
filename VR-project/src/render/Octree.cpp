@@ -169,11 +169,6 @@ OctreeNode::OctreeNode(NodeMetadata& metadata, std::string& points_path)
 
 
 
-OctreeNode::~OctreeNode()
-{
-	glDeleteBuffers(1, &VBO);
-	glDeleteVertexArrays(1, &VAO);
-}	
 
 void OctreeNode::AddSubnode(NodeMetadata& metadata, std::string& points_path, unsigned int index)
 {
@@ -195,7 +190,7 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 	if (insideFrustrum)
 	{
 		// Check if node should be rendered and fade in depending of LOD
-		if (levelOfDetail(camera_pos))
+		if (_level <= levelOfDetail(camera_pos))
 		{
 
 			// Check if buffer ready to be uploaded to VRAM
@@ -267,6 +262,13 @@ void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera
 {
 	float priority = calculatePriorityLevel(camera_pos, isInsideFrustrum(planes));
 	glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), priority*0.0001, 10000.0/priority, 0.0);
+
+	if(_level <= levelOfDetail(camera_pos))
+		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 0.0, 1.0, 0.0);
+	else
+		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 1.0, 0.0, 0.0);
+
+
 
 
 	glm::mat4 insideModel = glm::mat4(1.0f);
@@ -385,24 +387,18 @@ bool OctreeNode::isInsideFrustrum(plane_t planes[6])
 }
 
 
-bool OctreeNode::levelOfDetail(glm::vec3 camera_pos)
+unsigned char OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 {
 	float distance = glm::distance(camera_pos, _center);
 
-	/*unsigned int max_level = distance / (MIN_LOD_DISTANCE / (MAX_OCTREE_LEVEL + 1));
-	if (max_level > MAX_OCTREE_LEVEL) max_level = MAX_OCTREE_LEVEL;
-	max_level = MAX_OCTREE_LEVEL - max_level;		// If further LOD level is smaller
-
-	return _level <= max_level;*/
-
-	if (distance >= MIN_LOD_DISTANCE) return 0; // Mínimo LOD (Padre raíz)
+	if (distance >= MAX_LOD_DISTANCE) return 0; // Mínimo LOD (Padre raíz)
     if (distance <= 0.0f) return MAX_OCTREE_LEVEL; // Máximo LOD (Hijo profundo)
 
     // Normalizamos la distancia entre 0.0 y 1.0
-    float norm_dist = distance / MIN_LOD_DISTANCE;
+    float norm_dist = distance / MAX_LOD_DISTANCE;
 
     // Usamos una función potencia (ej. exp = 2.0) para concentrar los LODs cerca
-    float factor = std::pow(norm_dist, 0.5f); // La raíz cuadrada invierte la curva para dar más peso al inicio
+    float factor = std::pow(norm_dist, 0.7f); // La raíz cuadrada invierte la curva para dar más peso al inicio
 
     int lod = static_cast<int>((1.0f - factor) * MAX_OCTREE_LEVEL);
     return std::clamp(lod, 0, MAX_OCTREE_LEVEL);

@@ -21,6 +21,8 @@ public:
 	void CheckAndAct();
 	float CalculateVRAMPressure();
 	bool CanLoadToVRAM(size_t num_points, float priority);
+	unsigned int GetCurrentMB() { return _current_bytes / (1 MB); };
+	unsigned int GetMaxMB() { return _max_bytes / (1 MB); };
 	static VRAMManager& GetInstance()
 	{
 		static VRAMManager vram_manager;	// Creates only one instance although GetInstance called multiple times

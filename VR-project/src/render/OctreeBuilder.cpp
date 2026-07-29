@@ -16,6 +16,8 @@ OctreeBuilder::OctreeBuilder(std::vector<point_data_t>& points, glm::vec3& min, 
 	float half_node_size = std::max({sideX, sideY, sideZ}) * 0.5f;
 
 	_root_node = std::make_unique<OctreeBuilderNode>("r", center, half_node_size, grid_res, 0);
+
+	randomizeVector(points);
 	
 	unsigned int quarter_vector = points.size() / 4;
 	unsigned int half_vector = points.size() / 2;
@@ -125,6 +127,13 @@ void OctreeBuilder::CreateOctreeBinary(const std::string& metadata_path, const s
 
 }
 
+void OctreeBuilder::randomizeVector(std::vector<point_data_t>& points)
+{
+	std::random_device rd;
+    std::mt19937 g(42);	// To avoid random distribution each time use deterministic seed (42)
+    std::shuffle(points.begin(), points.end(), g);
+}
+
 
 // ----------- OctreeBuilderNode -------------------
 
@@ -229,17 +238,20 @@ void OctreeBuilderNode::addToSubnode(point_data_t& point)
 
 
 
+
+
 // --------------- Support class: Grid -----------------------
 
 Grid::Grid(unsigned int grid_res, float cell_size, glm::vec3 min)
-	: _grid_control(grid_res* grid_res* grid_res, false), _grid_res(grid_res), 
-	  _cell_size(cell_size), _min(min)
+	: _grid_control(1, false), _grid_res(grid_res), 
+	  _cell_size(cell_size), _min(min), _max_points(grid_res*grid_res*grid_res), _current_points(0)
 {
 }
 
 bool Grid::FreeGridCell(const point_data_t& point)
 {
-	int cellX = std::clamp((int)((point.position[0] - _min.x) / _cell_size), 0, (int)(_grid_res - 1));
+
+	/*int cellX = std::clamp((int)((point.position[0] - _min.x) / _cell_size), 0, (int)(_grid_res - 1));
 	int cellY = std::clamp((int)((point.position[1] - _min.y) / _cell_size), 0, (int)(_grid_res - 1));
 	int cellZ = std::clamp((int)((point.position[2] - _min.z) / _cell_size), 0, (int)(_grid_res - 1));
 
@@ -251,7 +263,16 @@ bool Grid::FreeGridCell(const point_data_t& point)
 		return true;
 	} 
 	else 
+		return false;*/
+		
+	if (_current_points < _max_points)
+	{
+		_current_points++;
+		return true;
+	}
+	else
 		return false;
+
 }
 
 unsigned int Grid::GetGridResolution()

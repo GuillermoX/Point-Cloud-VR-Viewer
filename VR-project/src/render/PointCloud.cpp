@@ -1,18 +1,19 @@
 #include <PointCloud.hpp>
 
-PointCloud::PointCloud(const std::string file_path, size_t max_points, unsigned int grid_res)
+PointCloud::PointCloud(const std::string file_path, unsigned int grid_res, bool create_bin, size_t max_points_bin)
 {
     // Check if octree preprocessed binaries available
     std::filesystem::path path = file_path;
     std::string meta_path = path.replace_extension(".meta").string();
     std::string points_path = path.replace_extension(".points").string();
-    // If any of the binary octree files don't exist create full octree and binaries
-    if (!std::filesystem::exists(meta_path) || !std::filesystem::exists(points_path))
+	std::string las_path = path.replace_extension(".las").string();
+    // If any of the binary octree files don't exist or create_bin=true create full octree and binaries
+    if (create_bin ||(!std::filesystem::exists(meta_path) || !std::filesystem::exists(points_path)))
     {	
 		// Read original .las file to get raw points
 		LASReader las_reader;
 		glm::vec3 min, max;
-		points = las_reader.loadLASFile(file_path, max_points, min, max);
+		points = las_reader.loadLASFile(las_path, max_points_bin, min, max);
 		if (!points.empty()) {
 			std::cout << "[RENDER CHECK] Total vertices in vector: " << points.size() << std::endl;
 		} else {
