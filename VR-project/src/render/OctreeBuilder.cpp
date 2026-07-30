@@ -17,7 +17,9 @@ OctreeBuilder::OctreeBuilder(std::vector<point_data_t>& points, glm::vec3& min, 
 
 	_root_node = std::make_unique<OctreeBuilderNode>("r", center, half_node_size, grid_res, 0);
 
+	std::cout << "[OCTREE BUILDER | INFO] Randomizing point cloud data..." << std::endl;
 	randomizeVector(points);
+	std::cout << "[OCTREE BUILDER | INFO] Point cloud data randomized." << std::endl;
 	
 	unsigned int quarter_vector = points.size() / 4;
 	unsigned int half_vector = points.size() / 2;
@@ -26,15 +28,27 @@ OctreeBuilder::OctreeBuilder(std::vector<point_data_t>& points, glm::vec3& min, 
 	for (ptrdiff_t i = vector_size-1; i >= 0; i--)
 	{
 		if (vector_size - i == quarter_vector)
+		{
 			std::cout << "[OCTREE BUILDER | INFO] Loaded 25% of points from raw points data." << std::endl;
+			points.shrink_to_fit();
+		}
 		else if (vector_size - i == half_vector)
+		{
 			std::cout << "[OCTREE BUILDER | INFO] Loaded 50% of points from raw points data." << std::endl;
+			points.shrink_to_fit();
+
+		}
 		else if (vector_size - i == three_quarters_vector)
+		{
 			std::cout << "[OCTREE BUILDER | INFO] Loaded 75% of points from raw points data." << std::endl;
+			points.shrink_to_fit();
+		}
 
 		_root_node->AddPoint(points[i]);
+		points.pop_back();
 	}
-
+	points.clear();
+	points.shrink_to_fit();
 }
 
 void OctreeBuilder::CreateOctreeBinary(const std::string& metadata_path, const std::string& points_path)

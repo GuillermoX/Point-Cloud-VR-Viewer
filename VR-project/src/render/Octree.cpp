@@ -1,18 +1,26 @@
 #include <Octree.hpp>
 
 // ------------ Octree ----------------
-Octree::Octree(std::string& meta_path, std::string& points_path)
+Octree::Octree(std::string& meta_path, std::string& points_path, bool& octree_created)
 {
-	loadBinaryOctree(meta_path, points_path);
-	std::cout << "[OCTREE | INFO] Octree structure loaded from binary file: " << meta_path << std::endl;
-	std::cout << "[OCTREE | INFO] Using octree points binary file: " << points_path << std::endl;
-	float size = _root_node->GetHalfSize() * 2.0f;
-	std::cout << "[OCTREE | INFO] Octree box dimension: " << size << " x " << size << std::endl;
-	
-	// Initialize LoadDataManager
-	LoadDataManager::Init(points_path, NUM_WORKERS);
+	if (loadBinaryOctree(meta_path, points_path))
+	{
+		std::cout << "[OCTREE | INFO] Octree structure loaded from binary file: " << meta_path << std::endl;
+		std::cout << "[OCTREE | INFO] Using octree points binary file: " << points_path << std::endl;
+		float size = _root_node->GetHalfSize() * 2.0f;
+		std::cout << "[OCTREE | INFO] Octree box dimension: " << size << " x " << size << std::endl;
 
-	_root_node->InitGraphicBuffers();
+		// Initialize LoadDataManager
+		LoadDataManager::Init(points_path, NUM_WORKERS);
+
+		_root_node->InitGraphicBuffers();
+
+		octree_created = true;
+	}
+	else
+	{
+		octree_created = false;
+	}
 }
 
 void Octree::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos, float delta_time, Shader& shader)
@@ -32,11 +40,12 @@ void Octree::Debug(const glm::mat4& vpm, glm::vec3 camera_pos)
 	_root_node->Debug(planes, vpm, camera_pos);
 }
 
-void Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
+bool Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
 {
 	std::ifstream file(meta_path, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "[OCTREE | ERROR] Unable to open binary file: " << meta_path << std::endl;
+		return false;
     }		
 
 	uint32_t num_nodes = 0;
@@ -45,7 +54,7 @@ void Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
 	if (num_nodes == 0)
 	{
 		std::cerr << "[OCTREE | WARNING] No nodes found in metadata bin file: " << meta_path << std::endl;
-		return;
+		return false;
 	}
 	else
 		std::cout << "[OCTREE | INFO] Number of nodes: " << num_nodes << std::endl;
@@ -78,7 +87,7 @@ void Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
 		if (node_queue.empty())	// If parent node not found binary is corrupted
 		{
 			std::cerr << "[OCTREE | ERROR] Corrupted octree metadata binary, node hierarchy broken" << std::endl;
-			return;
+			return false;
 		}
 
 		// Get index from subnode and add it to current front queue node	
@@ -89,6 +98,8 @@ void Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
 		node_queue.push(front_node->GetSubnode(subnode_index));	
 					
 	}
+
+	return true;
 }
 
 void Octree::getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6])
@@ -200,23 +211,26 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 				{
 					glBindVertexArray(VAO);
 					glBindBuffer(GL_ARRAY_BUFFER, VBO);
-					glBufferData(GL_ARRAY_BUFFER, _num_points * sizeof(point_data_t), _points_ptr, GL_STATIC_DRAW);
+					glBufferData(GL_ARRAY_BUFFER, _num_points * sizeof(point_data_t), _points_ptr->data(), GL_STATIC_DRAW);
 					glBindVertexArray(0);
 					glBindBuffer(GL_ARRAY_BUFFER, 0);
 					_state.store(PointBufferState::READY_IN_VRAM, std::memory_order_release);
-					free(_points_ptr);		// Delete point buffer pointer so the data inside is deleted from RAM
+					_points_ptr.reset();	// Delete point buffer pointer so the data inside is deleted from RAM
 					VRAMManager::GetInstance().RegisterNode(this);
 				}
 			}
 			else if (_state == PointBufferState::EMPTY)			// If buffer empty (not in VRAM nor RAM)
 			{	
+				_last_frame_active = false;
 				LoadDataManager& data_manager = LoadDataManager::GetInstance();		// Get singleton instance of LoadDataManager
 				if (data_manager.CanAddTask())
 				{
-					_points_ptr = (point_data_t*)malloc(_num_points * sizeof(point_data_t));
+					_points_ptr = std::make_unique<std::vector<point_data_t>>();
+					_points_ptr->resize(_num_points);
 					// Add the load buffer task to the LoadDataManager instance
-					data_manager.AddLoadVectorTask(reinterpret_cast<char*>(_points_ptr), _num_points, _byte_offset, _state);
+					data_manager.AddLoadVectorTask(reinterpret_cast<char*>(_points_ptr->data()), _num_points, _byte_offset, _state);
 				}
+				
 			}
 
 			// Check if buffer is ready to be drawn
@@ -236,10 +250,6 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 				glDrawArrays(GL_POINTS, 0, _num_points);
 				glBindVertexArray(0);
 
-			}
-			else
-			{
-				_last_frame_active = false;
 			}
 
 		}
@@ -261,7 +271,7 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos)
 {
 	float priority = calculatePriorityLevel(camera_pos, isInsideFrustrum(planes));
-	glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), priority*0.0001, 10000.0/priority, 0.0);
+	//glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), priority*0.0001, 10000.0/priority, 0.0);
 
 	if(_level <= levelOfDetail(camera_pos))
 		glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), 0.0, 1.0, 0.0);
@@ -391,22 +401,22 @@ unsigned char OctreeNode::levelOfDetail(glm::vec3 camera_pos)
 {
 	float distance = glm::distance(camera_pos, _center);
 
-	if (distance >= MAX_LOD_DISTANCE) return 0; // Mínimo LOD (Padre raíz)
-    if (distance <= 0.0f) return MAX_OCTREE_LEVEL; // Máximo LOD (Hijo profundo)
+	if (distance >= MAX_LOD_DISTANCE) return 0; // Minimum LOD
+    if (distance <= 0.0f) return MAX_OCTREE_LEVEL; // Maximum LOD
 
-    // Normalizamos la distancia entre 0.0 y 1.0
+	// Normalize distance between 0.0 and 1.0
     float norm_dist = distance / MAX_LOD_DISTANCE;
 
-    // Usamos una función potencia (ej. exp = 2.0) para concentrar los LODs cerca
-    float factor = std::pow(norm_dist, 0.7f); // La raíz cuadrada invierte la curva para dar más peso al inicio
+	// Use exponential function to concentrate all near LOD
+    float factor = std::pow(norm_dist, 2.5);
 
-    int lod = static_cast<int>((1.0f - factor) * MAX_OCTREE_LEVEL);
+	int lod = static_cast<int>(std::round(((1.0f - factor) * MAX_OCTREE_LEVEL)));
     return std::clamp(lod, 0, MAX_OCTREE_LEVEL);
 }
 
 float OctreeNode::calculatePriorityLevel(glm::vec3 camera_pos, bool insideFrustrum)
 {
-	float prio_level = (_level + 1) * std::pow(glm::distance(camera_pos, _center), 2);
+	float prio_level = (_level + 1) * std::pow(glm::distance(camera_pos, _center), 0.8);
 	return prio_level;
 }
 

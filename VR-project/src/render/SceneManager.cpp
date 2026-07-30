@@ -26,7 +26,7 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
 #endif
 
     // Glfw window creation
-    _window = glfwCreateWindow(scr_width, scr_height, "VR-cloud-point-viewer", NULL, NULL);
+    _window = glfwCreateWindow(scr_width, scr_height, "VR-point-cloud-viewer", NULL, NULL);
     if (_window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;

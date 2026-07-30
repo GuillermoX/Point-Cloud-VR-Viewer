@@ -81,7 +81,7 @@ struct point_data_t
 class LASReader
 {
 public:
-    std::vector<point_data_t> loadLASFile(const std::string& path, size_t max_points, glm::vec3& min, glm::vec3& max);
+    bool loadLASFile(std::vector<point_data_t>& vertex_buffer, const std::string& file_path, size_t max_points, glm::vec3& min, glm::vec3& max);
 };
 
 

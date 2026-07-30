@@ -23,7 +23,7 @@
 #include "LoadDataManager.hpp"
 #include "VRAMManager.hpp"
 
-inline unsigned int MAX_LOD_DISTANCE;	 // Distance where the LOD is minimum
+inline float MAX_LOD_DISTANCE;	 // Distance where the LOD is minimum
 
 
 
@@ -71,7 +71,7 @@ private:
 	unsigned int _level;
 	std::string _points_binary_path;
 
-	point_data_t* _points_ptr;	// Bridge buffer between disk and VRAM
+	std::unique_ptr<std::vector<point_data_t>> _points_ptr;	// Bridge buffer between disk and VRAM
 	
 	std::unique_ptr<OctreeNode> _subnodes[8];
 
@@ -96,12 +96,12 @@ private:
 class Octree
 {
 public:
-	Octree(std::string& meta_path, std::string& points_path);
+	Octree(std::string& meta_path, std::string& points_path, bool& octree_created);
 	void Draw(const glm::mat4& view_proj, glm::vec3 camera_pos, float delta_time, Shader& shader);
 	void Debug(const glm::mat4& vpm, glm::vec3 camera_pos);
 private:
 	std::unique_ptr<OctreeNode> _root_node;	
-	void loadBinaryOctree(std::string& meta_path, std::string& points_path);
+	bool loadBinaryOctree(std::string& meta_path, std::string& points_path);
 	void getFrustrumPlanes(const glm::mat4& vp, plane_t planes[6]);
 	int obtainIndexFromId(const std::string& id);
 	bool isSubnodeOf(const std::string& id_parent, const std::string& id_subnode);

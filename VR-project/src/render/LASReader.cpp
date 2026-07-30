@@ -1,14 +1,13 @@
 #include <LASReader.hpp>
 
-std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, size_t max_points, glm::vec3& min, glm::vec3& max)
+bool LASReader::loadLASFile(std::vector<point_data_t>& vertex_buffer, const std::string& file_path, size_t max_points, glm::vec3& min, glm::vec3& max)
 {
-	std::vector<point_data_t> vertex_buffer;
     min, max = { 0,0,0 };
 
     std::ifstream file(file_path, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "[LAS Loader] Error: Could not open file: " << file_path << std::endl;
-        return vertex_buffer;
+        return false;
     }
 
     // Read the header
@@ -18,7 +17,7 @@ std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, s
     // Validate LAS format
     if (std::string(header.file_signature, 4) != "LASF") {
         std::cerr << "[LAS Loader] Error: Invalid LAS file signature." << std::endl;
-        return vertex_buffer;
+        return false;
     }
 
     std::cout << "[DEBUG HEADER] Signature: " << std::string(header.file_signature, 4) << std::endl;
@@ -112,5 +111,5 @@ std::vector<point_data_t> LASReader::loadLASFile(const std::string& file_path, s
     file.close();
     std::cout << "[LAS Loader] Successfully loaded " << vertex_buffer.size() << " points." << std::endl;
     
-    return vertex_buffer;
+    return true;
 }

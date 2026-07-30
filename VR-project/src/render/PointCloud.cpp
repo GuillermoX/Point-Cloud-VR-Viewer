@@ -1,6 +1,6 @@
 #include <PointCloud.hpp>
 
-PointCloud::PointCloud(const std::string file_path, unsigned int grid_res, bool create_bin, size_t max_points_bin)
+PointCloud::PointCloud(const std::string file_path, unsigned int grid_res, bool create_bin, size_t max_points_bin, bool& point_cloud_created)
 {
     // Check if octree preprocessed binaries available
     std::filesystem::path path = file_path;
@@ -13,7 +13,11 @@ PointCloud::PointCloud(const std::string file_path, unsigned int grid_res, bool 
 		// Read original .las file to get raw points
 		LASReader las_reader;
 		glm::vec3 min, max;
-		points = las_reader.loadLASFile(las_path, max_points_bin, min, max);
+		if (!las_reader.loadLASFile(points, las_path, max_points_bin, min, max))
+		{
+			point_cloud_created = false;
+			return;
+		}
 		if (!points.empty()) {
 			std::cout << "[RENDER CHECK] Total vertices in vector: " << points.size() << std::endl;
 		} else {
@@ -31,8 +35,12 @@ PointCloud::PointCloud(const std::string file_path, unsigned int grid_res, bool 
     }
 
 	// Create rendering octree structure
-	octree_ptr = std::make_unique<Octree>(meta_path, points_path);
-
+	bool octree_created;
+	octree_ptr = std::make_unique<Octree>(meta_path, points_path, octree_created);
+	if (octree_created)
+		point_cloud_created = true;
+	else
+		point_cloud_created = false;
 }
 
 void PointCloud::Draw(const glm::mat4& view_proj, glm::vec3 camera_pos, float delta_time, Shader& shader)

@@ -4,10 +4,11 @@
 #include <vector>
 #include "LASReader.hpp"
 
-#define KB * 1024
-#define MB KB * 1024
-#define GB MB * 1024
-#define MAX_VRAM_BYTES 1ULL GB
+#define KB (1024ULL)
+#define MB (1024ULL * KB)
+#define GB (1024ULL * MB)
+//#define MAX_VRAM_BYTES 1ULL GB
+inline size_t MAX_VRAM_BYTES;
 #define THRESHOLD_LOW 0.90
 #define THRESHOLD_HIGH 0.95
 
@@ -21,8 +22,8 @@ public:
 	void CheckAndAct();
 	float CalculateVRAMPressure();
 	bool CanLoadToVRAM(size_t num_points, float priority);
-	unsigned int GetCurrentMB() { return _current_bytes / (1 MB); };
-	unsigned int GetMaxMB() { return _max_bytes / (1 MB); };
+	unsigned int GetCurrentMB() { return _current_bytes / (1*MB); };
+	unsigned int GetMaxMB() { return _max_bytes / (1*MB); };
 	static VRAMManager& GetInstance()
 	{
 		static VRAMManager vram_manager;	// Creates only one instance although GetInstance called multiple times
