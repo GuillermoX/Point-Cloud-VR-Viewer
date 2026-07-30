@@ -25,7 +25,6 @@
 
 #include "Camera.hpp"
 #include "Shader.hpp"
-#include "Model.hpp"
 #include "PointCloud.hpp"
 #include "VRManager.hpp"
 
@@ -70,7 +69,6 @@ class SceneManager
 {
 public:
 	std::unordered_map<std::string, Shader> shaders;		// Shaders
-	std::unordered_map<std::string, Model> models;			// Models
 	PointCloud* point_cloud;								// Point Cloud object
 	
 	/**
@@ -91,11 +89,6 @@ public:
 	 * @brief Adds a Shader to the SceneManager
 	 */
 	void AddShader(Shader& shader, std::string shader_id);
-
-	/**
-	 * @brief Adds a Model to the SceneManager
-	 */
-	void AddModel(Model& model, std::string model_id);
 
 	/**
 	 * @brief Adds a PointCloud to the SceneManager

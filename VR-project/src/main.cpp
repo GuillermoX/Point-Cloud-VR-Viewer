@@ -1,7 +1,6 @@
 #include <extern/CLI/CLI.hpp>
 
 #include <Shader.hpp>
-#include <Model.hpp>
 
 #include <VRManager.hpp>
 #include <SceneManager.hpp>

@@ -51,9 +51,6 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
         std::cout << "Failed to initialize GLAD" << std::endl;
     }
 
-    // Tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    stbi_set_flip_vertically_on_load(true);
-
     // Configure global opengl state
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);         // Alpha blending
@@ -109,11 +106,6 @@ void SceneManager::AddShader(Shader& shader, std::string shader_id)
     shaders.emplace(shader_id, shader);
 }
 
-
-void SceneManager::AddModel(Model& model, std::string model_id)
-{
-    models.emplace(model_id, model);
-}
 
 void SceneManager::AddPointCloud(PointCloud& point_cloud)
 {

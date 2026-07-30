@@ -30,8 +30,6 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\render\LASReader.cpp" />
     <ClCompile Include="src\render\LoadDataManager.cpp" />
-    <ClCompile Include="src\render\Mesh.cpp" />
-    <ClCompile Include="src\render\Model.cpp" />
     <ClCompile Include="src\render\Octree.cpp" />
     <ClCompile Include="src\render\OctreeBuilder.cpp" />
     <ClCompile Include="src\render\PointCloud.cpp" />
@@ -90,8 +88,6 @@
     <ClInclude Include="include\extern\stb_image.h" />
     <ClInclude Include="include\LASReader.hpp" />
     <ClInclude Include="include\LoadDataManager.hpp" />
-    <ClInclude Include="include\Mesh.hpp" />
-    <ClInclude Include="include\Model.hpp" />
     <ClInclude Include="include\Octree.hpp" />
     <ClInclude Include="include\OctreeBuilder.hpp" />
     <ClInclude Include="include\PointBufferState.hpp" />
