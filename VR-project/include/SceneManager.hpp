@@ -68,7 +68,6 @@ struct key_control_t
 class SceneManager
 {
 public:
-	std::unordered_map<std::string, Shader> shaders;		// Shaders
 	PointCloud* point_cloud;								// Point Cloud object
 	
 	/**
@@ -76,8 +75,9 @@ public:
 	 * @param scr_width: Screen Width
 	 * @param scr_height: Screen Height
 	 * @param vr_enabled: Specify if the scene is rendered in VR
+	 * @param flying_mode: Specify if the camera can fly
 	 */
-	SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled = false);
+	SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled = false, bool flying_mode = true);
 
 	/**
 	 * @brief SceneManager destructor
@@ -87,11 +87,13 @@ public:
 
 	/**
 	 * @brief Adds a Shader to the SceneManager
+	 * @param shader: shader to be used to render
 	 */
-	void AddShader(Shader& shader, std::string shader_id);
+	void AddShader(Shader& shader);
 
 	/**
 	 * @brief Adds a PointCloud to the SceneManager
+	 * @pram point_cloud: point cloud to be rendered
 	 */
 	void AddPointCloud(PointCloud& point_cloud);
 	
@@ -101,11 +103,6 @@ public:
 	 *          If VR is enabled it renders two times per frame (one render per eye)
 	 */
 	void ExecuteRenderLoop();
-
-	/**
-	 * @brief Enables or disables the flying mode
-	 */
-	void FlyingMode(bool active);
 
 private:
 	screen_manager_t _screen;							// Screen Manager
@@ -117,6 +114,7 @@ private:
 	std::unique_ptr<VRManager> _vr_manager_ptr;			// VR manager (includes camera managment and functions)
 
 	GLFWwindow* _window;								// GLFW window context
+	Shader* _shader;										// Shader used to render
 
 	GLuint _vr_FBO;										// VR frame buffer (two layers, one per eye)
 	GLuint _vr_depth_buffer;							// VR depth buffer
@@ -129,6 +127,9 @@ private:
 
 	/**
 	 * @brief Process debug option keys
+	 * @param key: Key to be checked as pressed
+	 * @param option: Boolean option to be changed if key is pressed
+	 * @param debug_key: Variable to know the state of the key the last frame
 	 */
 	void processDebugOption(unsigned int key, bool& option, bool& debug_key);
 
@@ -140,21 +141,20 @@ private:
 	/**
 	 * @brief GLFW Framebuffer Size Callback Function
 	 * @details It executes when screen is resized
+	 * @param window: Window GLFW context
+	 * @param width: Screen width
+	 * @pram height: Screen height
 	 */
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 	/**
 	 * @brief GLFW Mouse Callback Function
 	 * @details It executes when mouse is moved
+	 * @param window: Window GLFW context
+	 * @param xpos: mouse X position
+	 * @param ypos: mouse Y position
 	 */
 	static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-
-	/**
-	 * @brief GLFW Scroll Callback Function
-	 * @details It executes when mouse scroll moves
-	 */
-	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-
 };
 
 #endif

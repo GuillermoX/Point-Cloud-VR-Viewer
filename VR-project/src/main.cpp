@@ -40,12 +40,11 @@ int main(int argc, char** argv)
 
     MAX_VRAM_BYTES = max_vram_gb * GB;
 
-    SceneManager scene_manager(wwidth, wheight, vr_mode_enabled);
-    scene_manager.FlyingMode(flying_mode_enabled);
+    SceneManager scene_manager(wwidth, wheight, vr_mode_enabled, flying_mode_enabled);
 
     // Build and compile shaders
     Shader ourShader("assets/shaders/point_cloud.vert", "assets/shaders/point_cloud.frag");
-    scene_manager.AddShader(ourShader, "point_cloud");    
+    scene_manager.AddShader(ourShader);    
 
     // Load Cloud Point
     bool point_cloud_created;

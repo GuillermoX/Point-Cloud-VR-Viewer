@@ -1,16 +1,10 @@
 #include <SceneManager.hpp>
 
-SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled)
-{
-	// Initialize screen info
-	_screen.scr_width = scr_width;
-	_screen.scr_height = scr_height;
-	_screen.lastX = scr_width / 2.0f;
-	_screen.lastY = scr_height / 2.0f;
-    
-    // Initialize scene config
-    _scene_config.vr_enabled = vr_enabled;
-
+SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled, bool flying_mode) :
+    _screen{ scr_width, scr_height, scr_width / 2.0f, scr_height / 2.0f },      // Screen initalization
+    _scene_config{vr_enabled, flying_mode},                                     // Scene config initialization
+    _vr_FBO{0}, _vr_depth_buffer{0}                                             // No values until VR initialization
+{ 
 
     // GLFW and GLAD initialization
     // ----------------------------
@@ -29,8 +23,9 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
     _window = glfwCreateWindow(scr_width, scr_height, "VR-point-cloud-viewer", NULL, NULL);
     if (_window == NULL)
     {
-        std::cout << "Failed to create GLFW window" << std::endl;
+        std::cout << "[SCENE MANAGER | ERROR] Failed to create GLFW window" << std::endl;
         glfwTerminate();
+        return;
     }
     glfwMakeContextCurrent(_window);
     
@@ -39,7 +34,6 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
     {
         glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
         glfwSetCursorPosCallback(_window, mouse_callback);
-        glfwSetScrollCallback(_window, scroll_callback);
     }
 
     // Tell GLFW to capture our mouse
@@ -48,7 +42,8 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
     // glad: Load all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
-        std::cout << "Failed to initialize GLAD" << std::endl;
+        std::cout << "[SCENE MANAGER | ERROR] Failed to initialize GLAD" << std::endl;
+        return;
     }
 
     // Configure global opengl state
@@ -101,9 +96,9 @@ SceneManager::~SceneManager()
     glfwTerminate();
 }
 
-void SceneManager::AddShader(Shader& shader, std::string shader_id)
+void SceneManager::AddShader(Shader& shader)
 {
-    shaders.emplace(shader_id, shader);
+    _shader = &shader;
 }
 
 
@@ -114,8 +109,11 @@ void SceneManager::AddPointCloud(PointCloud& point_cloud)
 
 void SceneManager::ExecuteRenderLoop()
 {
-    Shader& currentShader = shaders.at("point_cloud");
-
+    if (_shader == nullptr)
+    {
+        std::cout << "[SCENE MANAGER | ERROR] No shader specified before executing render loop." << std::endl;
+        return;
+    }
     // ----------- RENDER LOOP ------------
     while (!glfwWindowShouldClose(_window))
     {
@@ -153,11 +151,11 @@ void SceneManager::ExecuteRenderLoop()
                 num_eyes_render = 2;    // In VR mode we render two eyes
             for (int eyeIndex = 0; eyeIndex < num_eyes_render; eyeIndex++)
             {
-                currentShader.use();
+                _shader->use();
 				if(_scene_config.vr_enabled) 
-					glUniform1f(glGetUniformLocation(currentShader.ID, "screenHeight"), _vr_manager_ptr->m_visorHeight);
+					glUniform1f(glGetUniformLocation(_shader->ID, "screenHeight"), _vr_manager_ptr->m_visorHeight);
 				else
-					glUniform1f(glGetUniformLocation(currentShader.ID, "screenHeight"), _screen.scr_height);
+					glUniform1f(glGetUniformLocation(_shader->ID, "screenHeight"), _screen.scr_height);
 
                 if (_scene_config.vr_enabled)
                 {
@@ -190,24 +188,24 @@ void SceneManager::ExecuteRenderLoop()
                 else                            // If VR disabled camera data obtained from Camera object
                 {
                     cameraPosition = _camera_ptr->Position;
-                    projection = glm::perspective(glm::radians(_camera_ptr->Zoom), (float)_screen.scr_width / (float)_screen.scr_height, 0.1f, 100.0f);
+                    projection = glm::perspective(glm::radians(_camera_ptr->Zoom), (float)_screen.scr_width / (float)_screen.scr_height, 0.1f, 300.0f);
                     view = _camera_ptr->GetViewMatrix();
                 }
 
                 // View/projection transformations
-                glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "projection"), 1, false, glm::value_ptr(projection));
-                glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "view"), 1, false, glm::value_ptr(view));
+                glUniformMatrix4fv(glGetUniformLocation(_shader->ID, "projection"), 1, false, glm::value_ptr(projection));
+                glUniformMatrix4fv(glGetUniformLocation(_shader->ID, "view"), 1, false, glm::value_ptr(view));
                 
                 // Model transformations
                 glm::mat4 model = glm::mat4(1.0f);
                 model = glm::translate(model, glm::vec3(0.0f, -1.5f, -2.0f)); // Translate in world space
                 model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// Scale the point cloud
-                glUniformMatrix4fv(glGetUniformLocation(currentShader.ID, "model"), 1, false, glm::value_ptr(model));
+                glUniformMatrix4fv(glGetUniformLocation(_shader->ID, "model"), 1, false, glm::value_ptr(model));
     
                 glm::mat4 vpm = projection * view * model;  // All view-projection-model matrix multiplied
                 // Apply inverse model matrix to camera position to be used in point cloud rendering
                 cameraPosition = glm::inverse(model) * glm::vec4(cameraPosition, 1.0);
-                point_cloud->Draw(vpm, cameraPosition, _timing.deltaTime, currentShader);   // Draw Point Cloud
+                point_cloud->Draw(vpm, cameraPosition, _timing.deltaTime, *_shader);   // Draw Point Cloud
 
                 if (_scene_config.octree_debug_enabled)     // Debug visualization of the Octree boxes
                     point_cloud->Debug(vpm, cameraPosition);
@@ -232,13 +230,6 @@ void SceneManager::ExecuteRenderLoop()
 
 }
 
-
-// Scene configuration
-// -------------------
-void SceneManager::FlyingMode(bool active)
-{
-    _scene_config.flying_enabled = active;
-}
 
 
 
@@ -361,13 +352,4 @@ void SceneManager::mouse_callback(GLFWwindow* window, double xposIn, double ypos
 
     // Get camera pointer
     scene->_camera_ptr->ProcessMouseMovement(xoffset, yoffset);
-}
-
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void SceneManager::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    // Get camera pointer
-    Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-    camera->ProcessMouseScroll(static_cast<float>(yoffset));
 }

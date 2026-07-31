@@ -13,6 +13,7 @@ PointCloud::PointCloud(const std::string file_path, unsigned int grid_res, bool 
 		// Read original .las file to get raw points
 		LASReader las_reader;
 		glm::vec3 min, max;
+		std::vector <point_data_t> points;
 		if (!las_reader.loadLASFile(points, las_path, max_points_bin, min, max))
 		{
 			point_cloud_created = false;
