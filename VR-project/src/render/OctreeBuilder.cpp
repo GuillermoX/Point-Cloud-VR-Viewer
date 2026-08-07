@@ -158,7 +158,7 @@ OctreeBuilderNode::OctreeBuilderNode(const std::string& id, glm::vec3 center, fl
 }
 
 OctreeBuilderNode::OctreeBuilderNode(const std::string& id, glm::vec3 center, float half_node_size, unsigned char index, unsigned int grid_res, unsigned int level)
-	: node_id(id), _level(level)
+	: node_id(id), _level(level+1)
 {
 	float quarter_node_size = half_node_size * 0.5;
 	if (index == 0)
@@ -244,7 +244,7 @@ void OctreeBuilderNode::addToSubnode(point_data_t& point)
 	if (_subnodes[index] == nullptr)
 	{
 		// Create it with the center of corresponding quarter
-		_subnodes[index] = std::make_unique<OctreeBuilderNode>(node_id, _center, _half_node_size, index, _grid_ptr->GetGridResolution(), _level + 1);
+		_subnodes[index] = std::make_unique<OctreeBuilderNode>(node_id, _center, _half_node_size, index, _grid_ptr->GetGridResolution(), _level);
 	}
 
 	_subnodes[index]->AddPoint(point);

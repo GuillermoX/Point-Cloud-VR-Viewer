@@ -35,25 +35,6 @@ void VRAMManager::CheckAndAct()
 }
 
 
-
-float VRAMManager::CalculateVRAMPressure() {
-    size_t threshold_low  = static_cast<size_t>(_max_bytes * THRESHOLD_LOW); // Low VRAM pressure
-    size_t threshold_high = static_cast<size_t>(_max_bytes * THRESHOLD_HIGH); // High VRAM pressure
-
-    // If below THRESHOLD LOW no pressure
-    if (_current_bytes <= threshold_low) {
-        return 0.0f;
-    }
-
-	// Calculate pressure as lineal value between low and high threshold
-    float pressure = static_cast<float>(_current_bytes - threshold_low) / 
-                     static_cast<float>(threshold_high - threshold_low);
-
-	// Ensure result is not above 1.0f or below 0.0f
-    return std::clamp(pressure, 0.0f, 1.0f);
-}
-
-
 bool VRAMManager::CanLoadToVRAM(size_t num_points, float priority)
 {
 	bool write_to_vram = false;

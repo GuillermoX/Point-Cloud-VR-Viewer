@@ -29,7 +29,21 @@ public:
 	 * @param[out]: It tells if the point cloud was created successfully
 	 */
 	PointCloud(const std::string file_path, unsigned int grid_res, bool create_bin, size_t max_points_bin, bool& point_cloud_created);
+
+	/**
+	 * @brief Draws the point cloud
+	 * @param view_proj: Multiplication of view and projection matrices used to render the scene
+	 * @param camera_pos: Position of the camera
+	 * @param delta_time: Delta Time of current frame
+	 * @param shader: Shader used to render point cloud (used to change uniform values)
+	 */
 	void Draw(const glm::mat4& view_proj, glm::vec3 camera_pos, float delta_time, Shader& shader);
+
+	/**
+	 * @brief Draws the debug octree box information
+	 * @param vpm: Multiplication of view and projection matrices used to render the scene
+	 * @param camera_pos: Position of the camera
+	 */
 	void Debug(const glm::mat4& vpm, glm::vec3 camera_pos);
 };
 

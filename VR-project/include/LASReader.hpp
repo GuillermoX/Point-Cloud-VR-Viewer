@@ -81,6 +81,14 @@ struct point_data_t
 class LASReader
 {
 public:
+    /**
+     * @brief Loads a LAS file into a points buffer
+     * @param[out] vertex_buffer: Buffer that is filled with all LAS point data
+     * @param file_path: Path to the LAS file to be loaded
+     * @param max_points: Maximum points of LAS file to be copied to the buffer
+     * @param[out] min: Minimum point of the point cloud
+     * @param[out] max: Maximum point of the point cloud
+     */
     bool loadLASFile(std::vector<point_data_t>& vertex_buffer, const std::string& file_path, size_t max_points, glm::vec3& min, glm::vec3& max);
 };
 
