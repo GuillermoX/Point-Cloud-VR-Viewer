@@ -41,24 +41,60 @@ public:
 	XrAction    m_moveAction{XR_NULL_HANDLE};
 	XrPath		m_leftHandPath{XR_NULL_PATH};
 
-	glm::vec3 virtual_position = glm::vec3(0.f);
+	glm::vec3 virtual_position = glm::vec3(0.0f);	// Position used to translate camera depending on user input joystick
 	
+	/**
+	 * @brief VRManager constructor
+	 * @details Initializes all OpenXR context
+	 * @param glfwWindow: GLFW Window context
+	 */
 	VRManager(GLFWwindow* glfwWindow);
+
+	/**
+	 * @brief Initializes the VR frame
+	 * @return uint32_t: Index of swapchain image from m_swapchainImages vector
+	 */
 	uint32_t InitFrame();
-	void GetViewProjectionMatrices();
+	
+	/**
+	 * @brief Finishes the OpenXR frame
+	 */
 	void FinishFrame();
+
+	/**
+	 * @brief Get the camera position of an VR eye
+	 * @param eyeIndex: Index of the eye (0 -> left, 1 -> right)
+	 */
 	glm::vec3 GetCameraPosition(int eyeIndex);
+
+	/**
+	 * @brief Get view matrix of an VR eye
+	 * @param eyeIndex: Index of the eye (0 -> left, 1 -> right)
+	 */
 	glm::mat4 GetViewMatrix(int eyeIndex);
+
+	/**
+	 * @brief Get projection matrix of an VR eye
+	 * @param eyeIndex: Index of the eye (0 -> left, 1 -> right)
+	 */
 	glm::mat4 GetProjectionMatrix(int eyeIndex);
+
+	/**
+	 * @brief Processes input from user
+	 * @param delta_time: Delta time of current frame
+	 * @param flying_enabled: True if camera can fly
+	 */
 	void ProcessInput(float delta_time, bool flying_enabled);
 
 private:
 	XrFrameState frameState;
 	XrView views[2];
-
+	
+	/**
+	 * @brief Syncronices the OpenXR state
+	 */
 	void syncActions();
 };
-
 
 
 #endif

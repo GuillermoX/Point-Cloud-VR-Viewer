@@ -143,7 +143,7 @@ private:
 	 * @details It executes when screen is resized
 	 * @param window: Window GLFW context
 	 * @param width: Screen width
-	 * @pram height: Screen height
+	 * @param height: Screen height
 	 */
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 

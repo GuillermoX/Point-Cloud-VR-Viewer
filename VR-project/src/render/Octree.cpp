@@ -37,7 +37,7 @@ void Octree::Debug(const glm::mat4& vpm, glm::vec3 camera_pos)
     glUniformMatrix4fv(glGetUniformLocation(_root_node->debug_shader->ID, "vpm"), 1, false, glm::value_ptr(vpm));
 	plane_t planes[6];
 	getFrustrumPlanes(vpm, planes);
-	_root_node->Debug(planes, vpm, camera_pos);
+	_root_node->Debug(planes, camera_pos);
 }
 
 bool Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
@@ -72,16 +72,17 @@ bool Octree::loadBinaryOctree(std::string& meta_path, std::string& points_path)
 	
 		OctreeNode* front_node = node_queue.front();
 		std::string subnode_id(node_meta.node_id);
-		// Find subnode's parent
+
+		// Find subnode's parent since there might be in the queue nodes without children
 		while (!isSubnodeOf(front_node->node_id, subnode_id))
 		{
-			// If is not child go to next queue's node and forget last node
+			// If front node is not this subnode's parents means that front node hasn't subnodes
 			node_queue.pop();
 
 			if (node_queue.empty())		// If no more parent nodes binary hierarchy broken
 				break;
 			
-			front_node = node_queue.front();
+			front_node = node_queue.front();	// Get next front node
 		}
 
 		if (node_queue.empty())	// If parent node not found binary is corrupted
@@ -196,7 +197,7 @@ OctreeNode* OctreeNode::GetSubnode(unsigned int index)
 void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time, Shader& shader)
 {	
 	bool insideFrustrum = isInsideFrustrum(planes);		// Check if node box inside frustrum
-	_priority_level = calculatePriorityLevel(camera_pos, insideFrustrum);	// Update priority level
+	_priority_level = calculatePriorityLevel(camera_pos);	// Update priority level
 	// Check if node should be rendered, if not don't try anything
 	if (insideFrustrum)
 	{
@@ -268,9 +269,9 @@ void OctreeNode::Draw(plane_t planes[6], glm::vec3 camera_pos, float delta_time,
 	}
 }
 
-void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera_pos)
+void OctreeNode::Debug(plane_t planes[6], glm::vec3 camera_pos)
 {
-	float priority = calculatePriorityLevel(camera_pos, isInsideFrustrum(planes));
+	float priority = calculatePriorityLevel(camera_pos);
 	//glUniform3f(glGetUniformLocation(debug_shader->ID, "Color"), priority*0.0001, 10000.0/priority, 0.0);
 
 	if(_level <= levelOfDetail(camera_pos))
@@ -294,7 +295,7 @@ void OctreeNode::Debug(plane_t planes[6], const glm::mat4& vpm, glm::vec3 camera
 	for (int i = 0; i < 8; i++)
 	{
 		if (_subnodes[i] != nullptr)
-			_subnodes[i]->Debug(planes, vpm, camera_pos);
+			_subnodes[i]->Debug(planes, camera_pos);
 	}
 }
 
@@ -323,7 +324,7 @@ void OctreeNode::InitGraphicBuffers()
 			_subnodes[i]->InitGraphicBuffers();
 	}
 	
-	// DEBUG
+	// ------ Debug octree box ---------
 	glGenVertexArrays(1, &debug_VAO);
 	glGenBuffers(1, &debug_VBO);
 
@@ -371,11 +372,6 @@ void OctreeNode::DeleteNodeVRAMData()
 	
 }
 
-std::atomic<PointBufferState>& OctreeNode::GetState()
-{
-	return _state;
-}
-
 bool OctreeNode::isInsideFrustrum(plane_t planes[6])
 {	
 	for (int i = 0; i < 6; i++) {
@@ -414,7 +410,7 @@ unsigned char OctreeNode::levelOfDetail(glm::vec3 camera_pos)
     return std::clamp(lod, 0, MAX_OCTREE_LEVEL);
 }
 
-float OctreeNode::calculatePriorityLevel(glm::vec3 camera_pos, bool insideFrustrum)
+float OctreeNode::calculatePriorityLevel(glm::vec3 camera_pos)
 {
 	float prio_level = (_level + 1) * std::pow(glm::distance(camera_pos, _center), 0.8);
 	return prio_level;

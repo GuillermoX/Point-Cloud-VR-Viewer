@@ -1,3 +1,10 @@
+/*
+ * Based in implementation of LearnOpenGL by Joey de Vries
+ * Original font: https://learnopengl.com/
+ *
+ * Modified by: Guillermo Pinteño
+ */
+
 #ifndef SHADER_H
 #define SHADER_H
 
@@ -12,12 +19,16 @@
 class Shader
 {
 public:
-    // the program ID
-    unsigned int ID;
+    unsigned int ID;    // The program ID
   
-    // constructor reads and builds the shader
+    /**
+     * @brief Shader constructor that reads and builds the shader/program
+     */
     Shader(const char* vertexPath, const char* fragmentPath);
-    // use/activate the shader
+
+    /**
+     * @brief Use/activate the shader/program in OpenGL context
+     */
     void use();
 };
   

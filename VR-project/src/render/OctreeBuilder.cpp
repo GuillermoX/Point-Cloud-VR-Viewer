@@ -263,22 +263,7 @@ Grid::Grid(unsigned int grid_res, float cell_size, glm::vec3 min)
 }
 
 bool Grid::FreeGridCell(const point_data_t& point)
-{
-
-	/*int cellX = std::clamp((int)((point.position[0] - _min.x) / _cell_size), 0, (int)(_grid_res - 1));
-	int cellY = std::clamp((int)((point.position[1] - _min.y) / _cell_size), 0, (int)(_grid_res - 1));
-	int cellZ = std::clamp((int)((point.position[2] - _min.z) / _cell_size), 0, (int)(_grid_res - 1));
-
-	int idx = cellX + (cellY * _grid_res) + (cellZ * _grid_res * _grid_res);
-
-	if (!_grid_control[idx]) 
-	{
-		_grid_control[idx] = true;
-		return true;
-	} 
-	else 
-		return false;*/
-		
+{	
 	if (_current_points < _max_points)
 	{
 		_current_points++;

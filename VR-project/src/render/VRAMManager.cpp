@@ -40,7 +40,7 @@ bool VRAMManager::CanLoadToVRAM(size_t num_points, float priority)
 	bool write_to_vram = false;
 
 	size_t points_bytes = num_points * sizeof(point_data_t);
-	// If adding the new node to VRAM the maximum is superpassed try to delete inferior nodes
+	// If adding the new node to VRAM the maximum is superpassed try to delete inferior nodes with lower priority level
 	if ((_current_bytes + points_bytes) > _max_bytes * THRESHOLD_HIGH)
 	{
 		bool finished = false;

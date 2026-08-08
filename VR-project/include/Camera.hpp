@@ -1,4 +1,9 @@
-
+/*
+ * Based in implementation of LearnOpenGL by Joey de Vries
+ * Original font: https://learnopengl.com/
+ *
+ * Modified by: Guillermo Pinteño
+ */
 
 #ifndef CAMERA_H
 #define CAMERA_H

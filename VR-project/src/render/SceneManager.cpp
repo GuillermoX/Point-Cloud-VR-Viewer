@@ -139,7 +139,7 @@ void SceneManager::ExecuteRenderLoop()
             if (_scene_config.vr_enabled && _vr_manager_ptr->m_session_running)
             {
                 imageIndex = _vr_manager_ptr->InitFrame();
-                // Get OpenGL texture from swap chain
+                // Get OpenXR texture from swap chain
                 openxrTexture = _vr_manager_ptr->m_swapchainImages[imageIndex].image;
                 glViewport(0, 0, _vr_manager_ptr->m_visorWidth, _vr_manager_ptr->m_visorHeight);
 
