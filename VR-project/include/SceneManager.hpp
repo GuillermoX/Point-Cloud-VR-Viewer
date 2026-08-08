@@ -9,7 +9,7 @@
 #include <thread>
 #include <chrono>
 
-#define GLFW_EXPOSE_NATIVE_WIN32 
+#define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -18,9 +18,9 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include <extern/imgui/imgui.h>		// GUI Library
-#include <extern/imgui/imgui_impl_glfw.h>		
-#include <extern/imgui/imgui_impl_opengl3.h>		
+#include <imgui/imgui.h>		// GUI Library
+#include <imgui/imgui_impl_glfw.h>		
+#include <imgui/imgui_impl_opengl3.h>		
 
 
 #include "Camera.hpp"

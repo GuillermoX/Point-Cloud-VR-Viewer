@@ -1,4 +1,4 @@
-#include <extern/CLI/CLI.hpp>
+#include <CLI/CLI.hpp>
 
 #include <Shader.hpp>
 
