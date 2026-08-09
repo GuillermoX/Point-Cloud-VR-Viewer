@@ -33,6 +33,7 @@ Build/
 bin/
 build/
 obj/
+github-releases/
 
 # --- Point Clouds ----
 cloud-points/
