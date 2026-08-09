@@ -596,6 +596,7 @@
     <ProjectGuid>{e0aa3214-419b-46d4-ac60-380fe93ded8d}</ProjectGuid>
     <RootNamespace>VRproject</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>PointCloudVRViewer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

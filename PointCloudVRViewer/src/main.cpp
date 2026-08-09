@@ -10,7 +10,7 @@
 int main(int argc, char** argv)
 {
     // Get CLI parameters
-    CLI::App app{"VR Point Cloud Viewer"};
+    CLI::App app{"Point Cloud VR Viewer"};
     bool vr_mode_enabled = false;
     bool flying_mode_enabled = false;
     bool create_octree_bin = false;
@@ -29,7 +29,7 @@ int main(int argc, char** argv)
         ->needs(opt_binary);
     app.add_option("-r,--resolution-box", node_resolution, "Resolution of node box")
         ->needs(opt_binary);
-    app.add_option("-c,--cloud", path, "Path of point cloud files")
+    app.add_option("-c,--cloud-path", path, "Path of point cloud files")
         ->required();
     app.add_option("-d,--distance", MAX_LOD_DISTANCE, "Maximum LOD distance (distance where LOD is minimum)");
     app.add_option("-g,--gpumem", max_vram_gb, "Maximum memory to use by GPU (GBytes)");
