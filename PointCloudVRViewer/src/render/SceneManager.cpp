@@ -1,8 +1,8 @@
 #include <SceneManager.hpp>
 
-SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled, bool flying_mode) :
+SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     _screen{ scr_width, scr_height, scr_width / 2.0f, scr_height / 2.0f },      // Screen initalization
-    _scene_config{vr_enabled, flying_mode},                                     // Scene config initialization
+    _scene_config{false, true},                                     // Scene config initialization
     _vr_FBO{0}, _vr_depth_buffer{0}                                             // No values until VR initialization
 { 
 
@@ -35,9 +35,6 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
         glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
         glfwSetCursorPosCallback(_window, mouse_callback);
     }
-
-    // Tell GLFW to capture our mouse
-    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: Load all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -83,12 +80,6 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height, bool
     glfwSetWindowUserPointer(_window, this);
 
 
-    // Debug ImGui lib context creator
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-
-    ImGui_ImplGlfw_InitForOpenGL(_window, true);
-    ImGui_ImplOpenGL3_Init("#version 330");     // GLSL version
 }
 
 SceneManager::~SceneManager()
@@ -109,6 +100,8 @@ void SceneManager::AddPointCloud(PointCloud& point_cloud)
 
 void SceneManager::ExecuteRenderLoop()
 {
+    // Tell GLFW to capture our mouse
+    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     if (_shader == nullptr)
     {
         std::cout << "[SCENE MANAGER | ERROR] No shader specified before executing render loop." << std::endl;

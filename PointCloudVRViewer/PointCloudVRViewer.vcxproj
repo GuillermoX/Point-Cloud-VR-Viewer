@@ -30,6 +30,7 @@
     <ClCompile Include="external\Include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\extern\glad.c" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\render\GUIManager.cpp" />
     <ClCompile Include="src\render\LASReader.cpp" />
     <ClCompile Include="src\render\LoadDataManager.cpp" />
     <ClCompile Include="src\render\Octree.cpp" />
@@ -565,6 +566,7 @@
     <ClInclude Include="include\extern\imgui\imstb_rectpack.h" />
     <ClInclude Include="include\extern\imgui\imstb_textedit.h" />
     <ClInclude Include="include\extern\imgui\imstb_truetype.h" />
+    <ClInclude Include="include\GUIManager.hpp" />
     <ClInclude Include="include\LASReader.hpp" />
     <ClInclude Include="include\LoadDataManager.hpp" />
     <ClInclude Include="include\Octree.hpp" />

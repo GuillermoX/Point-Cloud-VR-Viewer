@@ -5,42 +5,48 @@
 #include <VRManager.hpp>
 #include <SceneManager.hpp>
 #include <PointCloud.hpp>
+#include <GUIManager.hpp>
 
 
 int main(int argc, char** argv)
 {
-    // Get CLI parameters
-    CLI::App app{"Point Cloud VR Viewer"};
-    bool vr_mode_enabled = false;
-    bool flying_mode_enabled = false;
-    bool create_octree_bin = false;
-    size_t max_points = 0;
-    std::string path = "";
-    unsigned int node_resolution = 64;
-    MAX_LOD_DISTANCE = 100.0f;
-    float max_vram_gb = 1.0f;
-    unsigned int wwidth = 800;
-    unsigned int wheight = 600;
+	StartingConfig config;
 
-    app.add_flag("-v,--vr", vr_mode_enabled, "VR Mode enabled");
-    app.add_flag("-f,--flying", flying_mode_enabled, "Flying mode enabled");
-    CLI::Option* opt_binary = app.add_flag("-b,--binary-octree", create_octree_bin, "Create Binary Octree");
-    app.add_option("-p,--points", max_points, "Create Binary Octree with specified max number of points")
-        ->needs(opt_binary);
-    app.add_option("-r,--resolution-box", node_resolution, "Resolution of node box")
-        ->needs(opt_binary);
-    app.add_option("-c,--cloud-path", path, "Path of point cloud files")
-        ->required();
-    app.add_option("-d,--distance", MAX_LOD_DISTANCE, "Maximum LOD distance (distance where LOD is minimum)");
-    app.add_option("-g,--gpumem", max_vram_gb, "Maximum memory to use by GPU (GBytes)");
-    app.add_option("-H,--wheight", wheight, "Window Height (non VR mode)");
-    app.add_option("-W,--wwidth", wwidth, "Window Width (non VR mode)");
+    SceneManager scene_manager(config.wwidth, config.wheight);
+	GUIManager gui_manager(scene_manager.GetGLFWwindow());	
 
-    CLI11_PARSE(app, argc, argv);
+    if (argc > 1)	// If CLI parameters specified
+    {
+		// Get CLI parameters
+		CLI::App app{"Point Cloud VR Viewer"};
 
-    MAX_VRAM_BYTES = max_vram_gb * GB;
+		app.add_flag("-v,--vr", config.vr_mode_enabled, "VR Mode enabled");
+		app.add_flag("-f,--flying", config.flying_mode_enabled, "Flying mode enabled");
+		CLI::Option* opt_binary = app.add_flag("-b,--binary-octree", config.create_octree_bin, "Create Binary Octree");
+		app.add_option("-p,--points", config.max_points, "Create Binary Octree with specified max number of points")
+			->needs(opt_binary);
+		app.add_option("-r,--resolution-box", config.node_resolution, "Resolution of node box (number of points per dimension)")
+			->needs(opt_binary);
+		app.add_option("-c,--cloud-path", config.path, "Path of point cloud files")
+			->required();
+		app.add_option("-d,--distance", config.max_lod_distance, "Maximum LOD distance (distance where LOD is minimum)");
+		app.add_option("-g,--gpumem", config.max_vram_gb, "Maximum memory to use by GPU (GBytes)");
+		app.add_option("-H,--wheight", config.wheight, "Window Height (non VR mode)");
+		app.add_option("-W,--wwidth", config.wwidth, "Window Width (non VR mode)");
 
-    SceneManager scene_manager(wwidth, wheight, vr_mode_enabled, flying_mode_enabled);
+		CLI11_PARSE(app, argc, argv);
+    }
+	else
+	{
+		if (!gui_manager.StartMenu(config))
+			return 0;	// If exit menu without starting engine exit program
+	}
+
+    MAX_VRAM_BYTES = config.max_vram_gb * GB;
+	MAX_LOD_DISTANCE = config.max_lod_distance;
+
+	scene_manager.SetVREnabled(config.vr_mode_enabled);
+	scene_manager.SetFlyingEnabled(config.flying_mode_enabled);
 
     // Build and compile shaders
     Shader ourShader("assets/shaders/point_cloud.vert", "assets/shaders/point_cloud.frag");
@@ -48,7 +54,7 @@ int main(int argc, char** argv)
 
     // Load Cloud Point
     bool point_cloud_created;
-    PointCloud pointCloud(path, node_resolution, create_octree_bin, max_points, point_cloud_created);
+    PointCloud pointCloud(config.path, config.node_resolution, config.create_octree_bin, config.max_points, point_cloud_created);
     if (!point_cloud_created)
         return 1;
     scene_manager.AddPointCloud(pointCloud);

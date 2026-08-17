@@ -62,6 +62,7 @@ struct key_control_t
 };
 
 
+
 /**
  * @brief Manages the scene elements and the render loop
  */
@@ -77,13 +78,32 @@ public:
 	 * @param vr_enabled: Specify if the scene is rendered in VR
 	 * @param flying_mode: Specify if the camera can fly
 	 */
-	SceneManager(unsigned int scr_width, unsigned int scr_height, bool vr_enabled = false, bool flying_mode = true);
+	SceneManager(unsigned int scr_width, unsigned int scr_height);
 
 	/**
 	 * @brief SceneManager destructor
 	 * @details Destroys GLFW context with all resources in it
 	 */
 	~SceneManager();
+	
+	/**
+	 * @brief Scene config VR enabled setter
+	 * @param enabled: setter value to the VR enabled value
+	 */
+	void SetVREnabled(bool enabled) { _scene_config.vr_enabled = enabled; };
+
+	/**
+	 * @brief Scene config flying enabled setter
+	 * @param enabled: setter value to the flying enabled value
+	 */
+	void SetFlyingEnabled(bool enabled) { _scene_config.flying_enabled = enabled; };
+
+
+	/**
+	 * @brief Getter of GLFW window context
+	 */
+	GLFWwindow* GetGLFWwindow() { return _window; };
+
 
 	/**
 	 * @brief Adds a Shader to the SceneManager
