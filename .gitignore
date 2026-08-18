@@ -35,8 +35,10 @@ build/
 obj/
 github-releases/
 
-# --- Point Clouds ----
-cloud-points/
+# --- Assets ----
+assets/
+!assets/icons
+!assets/shaders
 
 # --- ImGUI lib configs ----
 imgui.ini
