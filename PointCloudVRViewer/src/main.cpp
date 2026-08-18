@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 	StartingConfig config;
 
     SceneManager scene_manager(config.wwidth, config.wheight);
-	GUIManager gui_manager(scene_manager.GetGLFWwindow());	
+	GUIManager* gui_manager = GUIManager::Init(scene_manager.GetGLFWwindow());	
 
     if (argc > 1)	// If CLI parameters specified
     {
@@ -38,19 +38,20 @@ int main(int argc, char** argv)
     }
 	else
 	{
-		if (!gui_manager.StartMenu(config))
+		if (!gui_manager->StartMenu(config))
 			return 0;	// If exit menu without starting engine exit program
 	}
 
     MAX_VRAM_BYTES = config.max_vram_gb * GB;
 	MAX_LOD_DISTANCE = config.max_lod_distance;
 
+	scene_manager.ChangeWindowResolution(config.wwidth, config.wheight);
 	scene_manager.SetVREnabled(config.vr_mode_enabled);
 	scene_manager.SetFlyingEnabled(config.flying_mode_enabled);
 
     // Build and compile shaders
-    Shader ourShader("assets/shaders/point_cloud.vert", "assets/shaders/point_cloud.frag");
-    scene_manager.AddShader(ourShader);    
+    Shader shader("assets/shaders/point_cloud.vert", "assets/shaders/point_cloud.frag");
+    scene_manager.AddShader(shader);    
 
     // Load Cloud Point
     bool point_cloud_created;

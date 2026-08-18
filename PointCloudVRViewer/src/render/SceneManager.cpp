@@ -1,5 +1,8 @@
 #include <SceneManager.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image/stb_image.h>
+
 SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     _screen{ scr_width, scr_height, scr_width / 2.0f, scr_height / 2.0f },      // Screen initalization
     _scene_config{false, true},                                     // Scene config initialization
@@ -20,7 +23,7 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
 #endif
 
     // Glfw window creation
-    _window = glfwCreateWindow(scr_width, scr_height, "VR-point-cloud-viewer", NULL, NULL);
+    _window = glfwCreateWindow(scr_width, scr_height, "Point Cloud VR Viewer", NULL, NULL);
     if (_window == NULL)
     {
         std::cout << "[SCENE MANAGER | ERROR] Failed to create GLFW window" << std::endl;
@@ -28,7 +31,28 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
         return;
     }
     glfwMakeContextCurrent(_window);
-    
+
+
+    // Load window icon
+    GLFWimage images[3];
+	images[0].pixels = stbi_load("assets/icons/icon_16.png", &images[0].width, &images[0].height, 0, 4);
+	images[1].pixels = stbi_load("assets/icons/icon_32.png", &images[1].width, &images[1].height, 0, 4);
+	images[2].pixels = stbi_load("assets/icons/icon_48.png", &images[2].width, &images[2].height, 0, 4);
+
+	if (images[0].pixels && images[1].pixels && images[2].pixels) 
+	{
+		// Add icon to window
+		glfwSetWindowIcon(_window, 3, images);
+	} 
+
+    for (int i = 0; i < 3; i++) 
+	{
+		if (images[i].pixels) 
+		{
+			stbi_image_free(images[i].pixels);
+		}
+	}
+   
     // Bind functions to glfw callbacks
     if (!_scene_config.vr_enabled)
     {
@@ -86,6 +110,15 @@ SceneManager::~SceneManager()
 {
     glfwTerminate();
 }
+
+
+void SceneManager::ChangeWindowResolution(unsigned int width, unsigned int height)
+{
+    glfwSetWindowSize(_window, width, height);
+    _screen.scr_height = height;
+    _screen.scr_width = width;
+}
+
 
 void SceneManager::AddShader(Shader& shader)
 {
@@ -205,7 +238,7 @@ void SceneManager::ExecuteRenderLoop()
             }
             
             if (_scene_config.hud_debug_enabled)
-                renderDebugHudInfo();
+                GUIManager::GetInstance()->RenderDebugHudInfo();
     
             // Finish the frame in VR mode or screen mode
             if (_scene_config.vr_enabled)
@@ -264,53 +297,6 @@ void SceneManager::processDebugOption(unsigned int key, bool& option, bool& debu
     debug_key = debug_key_pressed;
 }
 
-void SceneManager::renderDebugHudInfo()
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-
-	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
-
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.6f));
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
-
-	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | 
-							 ImGuiWindowFlags_AlwaysAutoResize | 
-							 ImGuiWindowFlags_NoMove | 
-							 ImGuiWindowFlags_NoSavedSettings | 
-							 ImGuiWindowFlags_NoFocusOnAppearing | 
-							 ImGuiWindowFlags_NoNav;
-
-	ImGui::Begin("HUD", nullptr, flags);
-    
-    float fps = ImGui::GetIO().Framerate;
-    if (fps < 35.0) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-    else if (fps < 55.0) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-    else ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-	ImGui::Text("FPS: %.1f", fps);
-    ImGui::PopStyleColor();
-
-    VRAMManager& vram_manager = VRAMManager::GetInstance();
-    unsigned int current = vram_manager.GetCurrentMB();
-    unsigned int max = vram_manager.GetMaxMB();
-    float usage = ((float)current / (float)max) * 100.0f;
-    if (usage < 50.0) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
-    else if (usage < 80.0) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f));
-    else ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
-	ImGui::Text("VRAM: %u/%u MB | %.1f%%", current, max, usage);
-    ImGui::PopStyleColor();
-
-
-    ImGui::End();
-
-	ImGui::PopStyleVar(2);
-	ImGui::PopStyleColor(1);
-
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
 
 
 // glfw: Whenever the window size changed (by OS or user resize) this callback function executes

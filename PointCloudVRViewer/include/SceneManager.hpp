@@ -22,11 +22,13 @@
 #include <imgui/imgui_impl_glfw.h>		
 #include <imgui/imgui_impl_opengl3.h>		
 
-
 #include "Camera.hpp"
 #include "Shader.hpp"
 #include "PointCloud.hpp"
 #include "VRManager.hpp"
+#include "GUIManager.hpp"
+
+
 
 struct screen_manager_t
 {
@@ -104,6 +106,13 @@ public:
 	 */
 	GLFWwindow* GetGLFWwindow() { return _window; };
 
+	/**
+	 * @brief Changes the window resolution
+	 * @param width: Desired window width
+	 * @param height: Desired window height
+	 */
+	void ChangeWindowResolution(unsigned int width, unsigned int height);
+
 
 	/**
 	 * @brief Adds a Shader to the SceneManager
@@ -153,10 +162,6 @@ private:
 	 */
 	void processDebugOption(unsigned int key, bool& option, bool& debug_key);
 
-	/**
-	 * @brief Renders debug info in a HUD handled by ImGui library
-	 */
-	void renderDebugHudInfo();
 	
 	/**
 	 * @brief GLFW Framebuffer Size Callback Function
