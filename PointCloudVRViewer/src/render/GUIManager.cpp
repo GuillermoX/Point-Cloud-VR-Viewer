@@ -46,7 +46,7 @@ bool GUIManager::StartMenu(StartingConfig& config)
         ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
         ImGui::SetNextWindowSize(ImVec2(config.wwidth, config.wheight), ImGuiCond_Appearing);
 
-        ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse;
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
 
         if (ImGui::Begin("Point Cloud VR Viewer - Configuration", nullptr, flags))
         {
