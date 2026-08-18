@@ -1,5 +1,7 @@
 #include <GUIManager.hpp>
 
+#include <filesystem>
+
 GUIManager::GUIManager(GLFWwindow* window) :
     _window{window}
 {
@@ -31,6 +33,8 @@ bool GUIManager::StartMenu(StartingConfig& config)
 
     bool start_engine = false;
 
+    loadCachedConfig(config);       // If previous cached config load it
+
     // Loop ends if "START ENGINE" is clicked or if the window close button ("X") is pressed
     while (!start_engine && !glfwWindowShouldClose(_window))
     {
@@ -58,15 +62,9 @@ bool GUIManager::StartMenu(StartingConfig& config)
             // Data Loading section
             if (ImGui::CollapsingHeader("Data Loading", ImGuiTreeNodeFlags_DefaultOpen))
 			{
-				char path_buffer[512];
-				snprintf(path_buffer, sizeof(path_buffer), "%s", config.path.c_str());
-
 				// Ajustamos el ancho del InputText para dejar espacio al botón "Browse..."
 				ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 105.0f);
-				if (ImGui::InputText("##path_input", path_buffer, sizeof(path_buffer)))
-				{
-					config.path = std::string(path_buffer);
-				}
+                ImGui::InputText("##path_input", config.path, sizeof(config.path));
 				if (ImGui::IsItemHovered())
 				{
 					ImGui::SetTooltip("Path to point cloud file (.las, .meta or .points)");
@@ -80,7 +78,7 @@ bool GUIManager::StartMenu(StartingConfig& config)
 					std::string selected_path = openFileDialog();
 					if (!selected_path.empty())
 					{
-						config.path = selected_path;
+				        snprintf(config.path, sizeof(config.path), "%s", selected_path.c_str());
 					}
 				}
 			}
@@ -106,10 +104,10 @@ bool GUIManager::StartMenu(StartingConfig& config)
 				uint64_t step      = 100'000ULL;
 		        uint64_t step_fast = 10'000'000ULL;
 
-		        ImGui::InputScalar("Max Points", ImGuiDataType_U64, &config.max_points, &step, &step_fast, "%llu");
+                ImGui::InputScalar("Max Points", ImGuiDataType_U64, &config.max_points, &step, &step_fast, "%llu");
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 {
-                    ImGui::SetTooltip("Max number of points for Binary Octree.");
+                    ImGui::SetTooltip("Max number of points for Binary Octree (0 = maximum points in file.");
                 }
 
                 int res_int = static_cast<int>(config.node_resolution);
@@ -197,7 +195,7 @@ bool GUIManager::StartMenu(StartingConfig& config)
             ImGui::Separator();
             ImGui::Spacing();
 
-            bool is_path_empty = config.path.empty();
+            bool is_path_empty = strcmp(config.path, "") == 0;
             if (is_path_empty)
             {
                 ImGui::BeginDisabled();
@@ -206,6 +204,7 @@ bool GUIManager::StartMenu(StartingConfig& config)
             if (ImGui::Button("START ENGINE", ImVec2(-1, 40)))
             {
                 start_engine = true;
+                storeCachedConfig(config);      // Store config to cache file
             }
 
             if (is_path_empty)
@@ -226,7 +225,7 @@ bool GUIManager::StartMenu(StartingConfig& config)
     }
 
 
-    glfwSetWindowAttrib(_window, GLFW_RESIZABLE, GLFW_TRUE);
+    glfwSetWindowAttrib(_window, GLFW_RESIZABLE, GLFW_TRUE);    // Make window resizable again
     return start_engine;
 }
 
@@ -300,6 +299,24 @@ std::string GUIManager::openFileDialog()
     }
     
     return "";
+}
+
+
+void GUIManager::loadCachedConfig(StartingConfig& config)
+{
+    if (std::filesystem::exists(INIT_CONFIG_PATH))
+    {
+        std::ifstream file(INIT_CONFIG_PATH, std::ios::binary); 
+        file.read(reinterpret_cast<char*>(&config), sizeof(StartingConfig));
+    }
+}
+
+
+
+void GUIManager::storeCachedConfig(StartingConfig& config)
+{ 
+    std::ofstream file(INIT_CONFIG_PATH, std::ios::binary | std::ios::trunc); 
+    file.write(reinterpret_cast<const char*>(&config), sizeof(StartingConfig));
 }
 
 

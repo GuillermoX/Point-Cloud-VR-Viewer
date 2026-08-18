@@ -40,3 +40,6 @@ cloud-points/
 
 # --- ImGUI lib configs ----
 imgui.ini
+
+# --- Cache Starting config ---
+*.conf

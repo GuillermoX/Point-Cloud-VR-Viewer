@@ -17,9 +17,10 @@ int main(int argc, char** argv)
 
     if (argc > 1)	// If CLI parameters specified
     {
+		std::string temp_path;	// Temporal path string to avoid problems with raw char[] config path
 		// Get CLI parameters
 		CLI::App app{"Point Cloud VR Viewer"};
-
+	
 		app.add_flag("-v,--vr", config.vr_mode_enabled, "VR Mode enabled");
 		app.add_flag("-f,--flying", config.flying_mode_enabled, "Flying mode enabled");
 		CLI::Option* opt_binary = app.add_flag("-b,--binary-octree", config.create_octree_bin, "Create Binary Octree");
@@ -27,7 +28,7 @@ int main(int argc, char** argv)
 			->needs(opt_binary);
 		app.add_option("-r,--resolution-box", config.node_resolution, "Resolution of node box (number of points per dimension)")
 			->needs(opt_binary);
-		app.add_option("-c,--cloud-path", config.path, "Path of point cloud files")
+		app.add_option("-c,--cloud-path", temp_path, "Path of point cloud files")
 			->required();
 		app.add_option("-d,--distance", config.max_lod_distance, "Maximum LOD distance (distance where LOD is minimum)");
 		app.add_option("-g,--gpumem", config.max_vram_gb, "Maximum memory to use by GPU (GBytes)");
@@ -35,6 +36,8 @@ int main(int argc, char** argv)
 		app.add_option("-W,--wwidth", config.wwidth, "Window Width (non VR mode)");
 
 		CLI11_PARSE(app, argc, argv);
+
+		snprintf(config.path, sizeof(config.path), "%s", temp_path.c_str());	// Copy temporal string to char[] path
     }
 	else
 	{

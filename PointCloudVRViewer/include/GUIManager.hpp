@@ -26,6 +26,8 @@
 
 #include "VRAMManager.hpp"
 
+#define INIT_CONFIG_PATH "./init.conf"
+
 /**
  * @brief struct used for the starting configuration
  */
@@ -35,7 +37,7 @@ struct StartingConfig
 	bool flying_mode_enabled = false;
 	bool create_octree_bin = false;
 	size_t max_points = 0;
-	std::string path = "";
+	char path[512] = "";
 	unsigned int node_resolution = 64;
 	float max_lod_distance = 100.0f;
 	float max_vram_gb = 1.0f;
@@ -94,7 +96,23 @@ private:
 	 * @brief Opens a file explorer window to select a point cloud file
 	 */
 	std::string openFileDialog();
+	
+	/**
+	 * @brief Loads the previous configuration used and stored in cache file
+	 * @details If no cache file config is not modified
+	 * @param config: Configuration to be loaded
+	 */
+	void loadCachedConfig(StartingConfig& config);
 
+	/**
+	 * @brief Stores current configuration in cache file for next execution
+	 * @param config: Configuration to be cached
+	 */
+	void storeCachedConfig(StartingConfig& config);
+	
+	/**
+	 * @brief Apply a custom theme to the menu
+	 */
 	void applyTheme();
 
 };
