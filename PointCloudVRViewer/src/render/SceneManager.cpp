@@ -57,7 +57,6 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     if (!_scene_config.vr_enabled)
     {
         glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
-        glfwSetCursorPosCallback(_window, mouse_callback);
     }
 
     // glad: Load all OpenGL function pointers
@@ -135,6 +134,8 @@ void SceneManager::ExecuteRenderLoop()
 {
     // Tell GLFW to capture our mouse
     glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(_window, mouse_callback);  // Only activate callback function once the engine is started (not in menu)
+
     if (_shader == nullptr)
     {
         std::cout << "[SCENE MANAGER | ERROR] No shader specified before executing render loop." << std::endl;
