@@ -49,6 +49,7 @@ int main(int argc, char** argv)
 	MAX_LOD_DISTANCE = config.max_lod_distance;
 
 	scene_manager.ChangeWindowResolution(config.wwidth, config.wheight);
+	scene_manager.SetBackgroundColor(config.bg_color);
 	scene_manager.SetVREnabled(config.vr_mode_enabled);
 	scene_manager.SetFlyingEnabled(config.flying_mode_enabled);
 

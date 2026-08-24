@@ -33,8 +33,8 @@
  */
 struct StartingConfig
 {
-	bool vr_mode_enabled = false;
-	bool flying_mode_enabled = false;
+	bool vr_mode_enabled = true;
+	bool flying_mode_enabled = true;
 	bool create_octree_bin = false;
 	size_t max_points = 0;
 	char path[512] = "";
@@ -43,6 +43,7 @@ struct StartingConfig
 	float max_vram_gb = 1.0f;
 	unsigned int wwidth = 800;
 	unsigned int wheight = 600;
+	float bg_color[3] = { 0.0f, 0.0f, 0.0f };
 };
 
 class GUIManager
@@ -59,7 +60,22 @@ public:
 	/**
 	 * @brief Renders debug info in a HUD
 	 */
-	void RenderDebugHudInfo();
+	void DrawDebugHudInfo();
+	
+	/**
+	 * @brief Render app info menu
+	 */
+	void DrawInfoMenu(bool show_controls);
+	
+	/**
+	 * @brief Initializes HUD frame
+	 */
+	void InitFrame();
+
+	/**
+	 * @brief Renders all drawn elements
+	 */
+	void Render();
 	
 	/**
 	 * @brief Singleton GUIManager instance initialization
@@ -114,6 +130,19 @@ private:
 	 * @brief Apply a custom theme to the menu
 	 */
 	void applyTheme();
+
+	/**
+	 * @brief Opens a URL into the default browser of the system
+	 * @param url: URL to open in browser
+	 */
+	void openURL(const char* url);
+	
+	/**
+	 * @brief Draws an underlined string with a url attached
+	 * @param str: string to draw
+	 * @param url: URL attached to the string
+	 */
+	void writeUnderlinedLink(std::string str, std::string url);
 
 };
 

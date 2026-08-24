@@ -118,6 +118,13 @@ void SceneManager::ChangeWindowResolution(unsigned int width, unsigned int heigh
     _screen.scr_width = width;
 }
 
+void SceneManager::SetBackgroundColor(float color[3])
+{
+    _scene_config.bg_color[0] = color[0];
+    _scene_config.bg_color[1] = color[1];
+    _scene_config.bg_color[2] = color[2];
+}
+
 
 void SceneManager::AddShader(Shader& shader)
 {
@@ -197,7 +204,7 @@ void SceneManager::ExecuteRenderLoop()
                 }
 
                 // Clean screen for current eye
-                glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+                glClearColor(_scene_config.bg_color[0], _scene_config.bg_color[1], _scene_config.bg_color[2], 1.0f);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -238,14 +245,28 @@ void SceneManager::ExecuteRenderLoop()
                     point_cloud->Debug(vpm, cameraPosition);
             }
             
-            if (_scene_config.hud_debug_enabled)
-                GUIManager::GetInstance()->RenderDebugHudInfo();
+
+
     
             // Finish the frame in VR mode or screen mode
             if (_scene_config.vr_enabled)
                 _vr_manager_ptr->FinishFrame();
             else
+            {
+
+				// HUD Rendering
+                GUIManager* gui_manager = GUIManager::GetInstance();
+				gui_manager->InitFrame();
+
+				if (_scene_config.hud_debug_enabled)
+					gui_manager->DrawDebugHudInfo();
+
+				gui_manager->DrawInfoMenu(_scene_config.hud_info_enabled);
+				gui_manager->Render();
+
+              
                 glfwSwapBuffers(_window);
+            }
         }
         else
         {
@@ -263,11 +284,14 @@ void SceneManager::ExecuteRenderLoop()
 
 void SceneManager::processInput()
 {
+
+    // General input keys
     if (glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(_window, true);    
+    processKeyOption(GLFW_KEY_B, _scene_config.octree_debug_enabled, _keys_state.octree_debug_key);
+    processKeyOption(GLFW_KEY_H, _scene_config.hud_debug_enabled, _keys_state.hud_debug_key);
+    processKeyOption(GLFW_KEY_K, _scene_config.hud_info_enabled, _keys_state.hud_info_key);
 
-    processDebugOption(GLFW_KEY_B, _scene_config.octree_debug_enabled, _keys_state.octree_debug_key);
-    processDebugOption(GLFW_KEY_H, _scene_config.hud_debug_enabled, _keys_state.hud_debug_key);
 
 
     if (_scene_config.vr_enabled)   // If VR mode delegate Input Processing to VR Manager
@@ -286,11 +310,20 @@ void SceneManager::processInput()
         if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
             _camera_ptr->ProcessKeyboard(Camera::RIGHT, _timing.deltaTime, _scene_config.flying_enabled);
 
+        // Cursor state handling
+		bool cursor_key_pressed = glfwGetKey(_window, GLFW_KEY_C) == GLFW_PRESS;
+		if (cursor_key_pressed && !_keys_state.cursor_enabled_key)
+		{
+			_screen.cursor_enabled = !_screen.cursor_enabled;
+			setCursor(_screen.cursor_enabled);
+		}
+		_keys_state.cursor_enabled_key = cursor_key_pressed;
+
     }
 
 }
 
-void SceneManager::processDebugOption(unsigned int key, bool& option, bool& debug_key)
+void SceneManager::processKeyOption(unsigned int key, bool& option, bool& debug_key)
 { 
     bool debug_key_pressed = glfwGetKey(_window, key) == GLFW_PRESS;
     if (debug_key_pressed && !debug_key)
@@ -298,6 +331,22 @@ void SceneManager::processDebugOption(unsigned int key, bool& option, bool& debu
     debug_key = debug_key_pressed;
 }
 
+
+void SceneManager::setCursor(bool enable)
+{
+    if (enable)
+    {
+        glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        _screen.firstMouse = true;
+        glfwSetCursorPosCallback(_window, NULL);  // Only activate callback function once the engine is started (not in menu)
+    }
+    else
+    {
+        glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetCursorPosCallback(_window, mouse_callback);  // Only activate callback function once the engine is started (not in menu)
+    }
+
+}
 
 
 // glfw: Whenever the window size changed (by OS or user resize) this callback function executes
@@ -307,6 +356,10 @@ void SceneManager::framebuffer_size_callback(GLFWwindow* window, int width, int 
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
+    SceneManager* scene = static_cast<SceneManager*>(glfwGetWindowUserPointer(window));
+    scene->_screen.scr_width = width;
+    scene->_screen.scr_height = height;
+
 }
 
 // glfw: Whenever the mouse moves, this callback is called

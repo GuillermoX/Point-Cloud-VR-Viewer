@@ -1,6 +1,7 @@
 #include <GUIManager.hpp>
 
 #include <filesystem>
+#include <shellapi.h>
 
 GUIManager::GUIManager(GLFWwindow* window) :
     _window{window}
@@ -15,9 +16,10 @@ GUIManager::GUIManager(GLFWwindow* window) :
 
     ImGuiIO& io = ImGui::GetIO();
     // Load Windows font
+    const ImWchar* ranges = io.Fonts->GetGlyphRangesDefault();
     ImFontConfig font_config;
     font_config.PixelSnapH = true; // Align glyphs to integer pixel boundaries
-    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 16.0f, &font_config);
+    io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\segoeui.ttf", 16.0f, &font_config, ranges);
 
     applyTheme();
 }
@@ -85,9 +87,47 @@ bool GUIManager::StartMenu(StartingConfig& config)
          
             ImGui::Spacing();
 
+            // Window and camera modes section
+            if (ImGui::CollapsingHeader("Window & Navigation Modes", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+
+                ImGui::Checkbox("Flying Mode", &config.flying_mode_enabled);
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("Enable flying camera navigation mode.");
+                }
+
+                ImGui::SameLine();
+
+                ImGui::Checkbox("VR Mode", &config.vr_mode_enabled);
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("Enable Virtual Reality Mode.");
+                }
+
+
+                int resolution[2] = { static_cast<int>(config.wwidth), static_cast<int>(config.wheight) };
+                if (ImGui::InputInt2("Resolution (width x height)", resolution))
+                {
+                    config.wwidth = static_cast<unsigned int>(std::max(320, resolution[0]));
+                    config.wheight = static_cast<unsigned int>(std::max(240, resolution[1]));
+                }
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("Width and Height of window (non-VR mode).");
+                }
+
+                ImGui::Spacing();
+
+                ImGui::ColorEdit3("Background Color", config.bg_color, ImGuiColorEditFlags_NoInputs);
+            }
+
+
+            ImGui::Spacing();
+
 
             // Binary Octree section
-            if (ImGui::CollapsingHeader("Octree Structure", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Octree Structure"))
             {
                 ImGui::Checkbox("Create Binary Octree", &config.create_octree_bin);
                 if (ImGui::IsItemHovered())
@@ -128,41 +168,9 @@ bool GUIManager::StartMenu(StartingConfig& config)
 
             ImGui::Spacing();
 
-            // Window and camera modes section
-            if (ImGui::CollapsingHeader("Window & Navigation Modes", ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                int resolution[2] = { static_cast<int>(config.wwidth), static_cast<int>(config.wheight) };
-                if (ImGui::InputInt2("Resolution (width x height)", resolution))
-                {
-                    config.wwidth = static_cast<unsigned int>(std::max(320, resolution[0]));
-                    config.wheight = static_cast<unsigned int>(std::max(240, resolution[1]));
-                }
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::SetTooltip("Width and Height of window (non-VR mode).");
-                }
-
-                ImGui::Spacing();
-
-                ImGui::Checkbox("Flying Mode", &config.flying_mode_enabled);
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::SetTooltip("Enable flying camera navigation mode.");
-                }
-
-                ImGui::SameLine();
-
-                ImGui::Checkbox("VR Mode", &config.vr_mode_enabled);
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::SetTooltip("Enable Virtual Reality Mode.");
-                }
-            }
-
-            ImGui::Spacing();
 
             // Performance section
-            if (ImGui::CollapsingHeader("Performance", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Performance"))
             {
                 ImGui::SliderFloat("Distance where LOD is minimum", &config.max_lod_distance, 10.0f, 800.0f, "%.1f m");
                 if (ImGui::IsItemHovered())
@@ -215,6 +223,34 @@ bool GUIManager::StartMenu(StartingConfig& config)
                     ImGui::SetTooltip("Specify a file path to continue.");
                 }
             }
+            
+
+
+            // ------------ FOOTER INFO --------------------- 
+            // Get position to write the text to the bottom
+			float line_height = ImGui::GetTextLineHeightWithSpacing();
+			float padding_y   = ImGui::GetStyle().WindowPadding.y;
+
+            // Move vertical cursor to the bottom
+			ImGui::SetCursorPosY(ImGui::GetWindowHeight() - line_height - padding_y);
+			ImGui::Separator();
+            // Get text width
+            float total_width = ImGui::CalcTextSize("Developed by Guillermo Pinte\xC3\xB1o | Scandraw").x;
+
+            // Move horizontal cursor to the center of window
+			float window_width = ImGui::GetWindowSize().x;
+			float start_x      = (window_width - total_width) * 0.5f;
+			ImGui::SetCursorPosX(start_x);
+
+			ImGui::Text("Developed by");
+			ImGui::SameLine(); 
+            writeUnderlinedLink("Guillermo Pinte\xC3\xB1o", "https://github.com/GuillermoX");
+			ImGui::SameLine(); 
+			ImGui::Text("|");
+			ImGui::SameLine();
+            writeUnderlinedLink("Scandraw", "https://scandraw.net/");
+
+
         }
         ImGui::End();
 
@@ -229,17 +265,11 @@ bool GUIManager::StartMenu(StartingConfig& config)
     return start_engine;
 }
 
-void GUIManager::RenderDebugHudInfo()
+void GUIManager::DrawDebugHudInfo()
 {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
+    ImGui::SetNextWindowBgAlpha(0.35f);
 
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.6f));
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 2));
 
 	ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | 
 							 ImGuiWindowFlags_AlwaysAutoResize | 
@@ -267,16 +297,92 @@ void GUIManager::RenderDebugHudInfo()
 	ImGui::Text("VRAM: %u/%u MB | %.1f%%", current, max, usage);
     ImGui::PopStyleColor();
 
-
     ImGui::End();
 
-	ImGui::PopStyleVar(2);
-	ImGui::PopStyleColor(1);
 
+}
+
+void GUIManager::DrawInfoMenu(bool show_controls)
+{
+
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration          | 
+                             ImGuiWindowFlags_AlwaysAutoResize      | 
+                             ImGuiWindowFlags_NoSavedSettings       | 
+                             ImGuiWindowFlags_NoFocusOnAppearing    | 
+                             ImGuiWindowFlags_NoNav                 | 
+                             ImGuiWindowFlags_NoMove;
+
+    ImVec2 display_size = ImGui::GetIO().DisplaySize;
+	ImVec2 center_bottom;
+    center_bottom.x = 12.0f;
+	center_bottom.y = display_size.y - 12.0f;
+
+    ImGui::SetNextWindowPos(center_bottom, ImGuiCond_Always, ImVec2(0.0, 1.0));
+    ImGui::SetNextWindowBgAlpha(0.35f);
+
+    if (ImGui::Begin("##ControlsHUD", nullptr, flags))
+    {
+        if (show_controls)
+        {
+            if (ImGui::BeginTable("hud_keys_table", 2, ImGuiTableFlags_SizingFixedFit))
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); 
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "W/A/S/D");
+                ImGui::TableSetColumnIndex(1); 
+                ImGui::Text(": Movement");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); 
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "ESC");
+                ImGui::TableSetColumnIndex(1); 
+                ImGui::Text(": Exit");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); 
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "C");
+                ImGui::TableSetColumnIndex(1); 
+                ImGui::Text(": Lock/Unlock Mouse");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); 
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "H");
+                ImGui::TableSetColumnIndex(1); 
+                ImGui::Text(": Performance Info");
+
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0); 
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "B");
+                ImGui::TableSetColumnIndex(1); 
+                ImGui::Text(": Octree Visualization");
+
+                ImGui::EndTable();
+            }
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::TextDisabled("Press K to hide controls");
+        }
+        else
+        {
+            ImGui::TextDisabled("Press K to show controls");
+        }
+    }
+    ImGui::End();
+}
+
+void GUIManager::InitFrame()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+}
+
+void GUIManager::Render()
+{
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
-
 
 std::string GUIManager::openFileDialog()
 {
@@ -360,4 +466,25 @@ void GUIManager::applyTheme()
 
 }
 
+void GUIManager::openURL(const char* url)
+{
+   ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOWNORMAL); 
+}
+
+void GUIManager::writeUnderlinedLink(std::string str, std::string url)
+{
+
+	ImGui::TextColored(ImVec4(0.35f, 0.65f, 1.00f, 1.00f), str.c_str());
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+		ImGui::SetTooltip(url.c_str());
+
+		if (ImGui::IsItemClicked())
+		{
+			openURL(url.c_str());
+		}
+	}
+}
 

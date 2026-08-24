@@ -38,6 +38,7 @@ struct screen_manager_t
 	float lastX;     // position first mouse coordinates to screen center
 	float lastY;
 	bool firstMouse = true;
+	bool cursor_enabled = false;
 };
 
 struct timing_t
@@ -52,6 +53,8 @@ struct scene_config_t
 	bool flying_enabled = false;
 	bool octree_debug_enabled = false;
 	bool hud_debug_enabled = false;
+	bool hud_info_enabled = true;
+	float bg_color[3];
 };
 
 /**
@@ -61,6 +64,8 @@ struct key_control_t
 {
 	bool octree_debug_key = false;
 	bool hud_debug_key = false;
+	bool hud_info_key = false;
+	bool cursor_enabled_key = false;
 };
 
 
@@ -112,6 +117,12 @@ public:
 	 * @param height: Desired window height
 	 */
 	void ChangeWindowResolution(unsigned int width, unsigned int height);
+	
+	/**
+	 * @brief Sets the background color
+	 * @param color: Desired background color
+	 */
+	void SetBackgroundColor(float color[3]);
 
 
 	/**
@@ -160,7 +171,13 @@ private:
 	 * @param option: Boolean option to be changed if key is pressed
 	 * @param debug_key: Variable to know the state of the key the last frame
 	 */
-	void processDebugOption(unsigned int key, bool& option, bool& debug_key);
+	void processKeyOption(unsigned int key, bool& option, bool& debug_key);
+
+	/**
+	 * @brief Sets cursor to enabled or disabled mode
+	 * @param enable: true if inabled, false if disabled
+	 */
+	void setCursor(bool enable);
 
 	
 	/**
