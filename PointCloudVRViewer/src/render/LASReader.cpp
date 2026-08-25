@@ -5,8 +5,9 @@ bool LASReader::loadLASFile(std::vector<point_data_t>& vertex_buffer, const std:
     min, max = { 0,0,0 };
 
     std::ifstream file(file_path, std::ios::binary);
-    if (!file.is_open()) {
-        std::cerr << "[LAS Loader] Error: Could not open file: " << file_path << std::endl;
+    if (!file.is_open()) 
+    {
+        std::cerr << "[LAS Loader | ERROR] Could not open file: " << file_path << std::endl;
         return false;
     }
 
@@ -15,8 +16,9 @@ bool LASReader::loadLASFile(std::vector<point_data_t>& vertex_buffer, const std:
     file.read(reinterpret_cast<char*>(&header), sizeof(LASHeader));
 
     // Validate LAS format
-    if (std::string(header.file_signature, 4) != "LASF") {
-        std::cerr << "[LAS Loader] Error: Invalid LAS file signature." << std::endl;
+    if (std::string(header.file_signature, 4) != "LASF") 
+    {
+        std::cerr << "[LAS Loader | ERROR] Invalid LAS file signature." << std::endl;
         return false;
     }
 
@@ -26,6 +28,12 @@ bool LASReader::loadLASFile(std::vector<point_data_t>& vertex_buffer, const std:
     std::cout << "[DEBUG HEADER] Point Format: " << (int)header.point_data_format << std::endl;
 
     std::cout << "[LAS Loader] Point Data Format: " << static_cast<int>(header.point_data_format) << std::endl;
+    if (header.point_data_format != 2)
+    {
+        std::cerr << "[LAS Loader | ERROR] Unaccepted point format" << header.point_data_format << ".Expected format : 2." << std::endl;
+        return false;
+
+    }
     std::cout << "[LAS Loader] Bytes per point: " << header.point_data_record_length << std::endl;
 
     // Calculate total points in the file

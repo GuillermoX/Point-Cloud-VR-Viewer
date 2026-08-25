@@ -10,14 +10,14 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform float screenHeight;
+uniform float pointSize;	// Point radius in meters
 
 void main()
 {
 	gl_Position = projection * view * model * vec4(aPos, 1.0);
 	PointColor = aColor;	// Send color to fragment shader
 
-	float pointRadiusInMeters = 0.005; // Each point is 0.5 cm in real life
 
 	// Keeps the same constant physical size in pixels 
-	gl_PointSize = (pointRadiusInMeters * projection[1][1] * screenHeight) / gl_Position.w;
+	gl_PointSize = (pointSize * projection[1][1] * screenHeight) / gl_Position.w;
 }

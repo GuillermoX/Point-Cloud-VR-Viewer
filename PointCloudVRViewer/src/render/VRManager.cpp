@@ -376,7 +376,7 @@ void VRManager::ProcessInput(float delta_time, bool flying_enabled)
                 moveDir.y = 0.0f;
                 moveDir = glm::normalize(moveDir);
             }
-            virtual_position += moveDir * delta_time;
+            virtual_position += moveDir * movement_speed * delta_time;
         }
     }
 

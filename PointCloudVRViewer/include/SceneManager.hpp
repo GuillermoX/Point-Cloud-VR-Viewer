@@ -55,6 +55,8 @@ struct scene_config_t
 	bool hud_debug_enabled = false;
 	bool hud_info_enabled = true;
 	float bg_color[3];
+	float point_size;	// in cm
+	float movement_speed = 2.5f;
 };
 
 /**
@@ -105,12 +107,6 @@ public:
 	 */
 	void SetFlyingEnabled(bool enabled) { _scene_config.flying_enabled = enabled; };
 
-
-	/**
-	 * @brief Getter of GLFW window context
-	 */
-	GLFWwindow* GetGLFWwindow() { return _window; };
-
 	/**
 	 * @brief Changes the window resolution
 	 * @param width: Desired window width
@@ -124,6 +120,16 @@ public:
 	 */
 	void SetBackgroundColor(float color[3]);
 
+	/**
+	 * @brief Scene config movement speed setter
+	 * @param enabled: setter value to the movement speed value
+	 */
+	void SetMovementSpeed(float speed);
+
+	/**
+	 * @brief Getter of GLFW window context
+	 */
+	GLFWwindow* GetGLFWwindow() { return _window; };
 
 	/**
 	 * @brief Adds a Shader to the SceneManager
@@ -143,6 +149,7 @@ public:
 	 *          If VR is enabled it renders two times per frame (one render per eye)
 	 */
 	void ExecuteRenderLoop();
+
 
 private:
 	screen_manager_t _screen;							// Screen Manager

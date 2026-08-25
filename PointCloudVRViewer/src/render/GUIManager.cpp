@@ -88,24 +88,8 @@ bool GUIManager::StartMenu(StartingConfig& config)
             ImGui::Spacing();
 
             // Window and camera modes section
-            if (ImGui::CollapsingHeader("Window & Navigation Modes", ImGuiTreeNodeFlags_DefaultOpen))
+            if (ImGui::CollapsingHeader("Window & Visualization", ImGuiTreeNodeFlags_DefaultOpen))
             {
-
-                ImGui::Checkbox("Flying Mode", &config.flying_mode_enabled);
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::SetTooltip("Enable flying camera navigation mode.");
-                }
-
-                ImGui::SameLine();
-
-                ImGui::Checkbox("VR Mode", &config.vr_mode_enabled);
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::SetTooltip("Enable Virtual Reality Mode.");
-                }
-
-
                 int resolution[2] = { static_cast<int>(config.wwidth), static_cast<int>(config.wheight) };
                 if (ImGui::InputInt2("Resolution (width x height)", resolution))
                 {
@@ -118,8 +102,43 @@ bool GUIManager::StartMenu(StartingConfig& config)
                 }
 
                 ImGui::Spacing();
+                ImGui::Checkbox("VR Mode", &config.vr_mode_enabled);
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("Enable Virtual Reality Mode.");
+                }
+                
+                ImGui::Spacing();
+
+                ImGui::Checkbox("Flying Mode", &config.flying_mode_enabled);
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("Enable flying camera navigation mode.");
+                }
+
+                ImGui::SameLine();
+
+
+                ImGui::SliderFloat("Movement Speed", &config.movement_speed, 1.0f, 20.0f, "%.1f m/s");
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::SetTooltip("Speed of the camera when move.");
+                }
+
+                ImGui::Spacing();
+
 
                 ImGui::ColorEdit3("Background Color", config.bg_color, ImGuiColorEditFlags_NoInputs);
+                
+                ImGui::SetNextItemWidth(80.0f);
+                if (ImGui::InputFloat("Point Size (cm)", &config.point_size))
+                {
+                    if (config.point_size > MAX_POINT_SIZE)
+                    {
+                        config.point_size = MAX_POINT_SIZE;
+                    }
+                }
+
             }
 
 

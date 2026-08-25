@@ -42,6 +42,7 @@ public:
 	XrPath		m_leftHandPath{XR_NULL_PATH};
 
 	glm::vec3 virtual_position = glm::vec3(0.0f);	// Position used to translate camera depending on user input joystick
+	float movement_speed = 2.5f;
 	
 	/**
 	 * @brief VRManager constructor

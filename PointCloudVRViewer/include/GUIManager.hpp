@@ -27,6 +27,7 @@
 #include "VRAMManager.hpp"
 
 #define INIT_CONFIG_PATH "./init.conf"
+#define MAX_POINT_SIZE 100.0f
 
 /**
  * @brief struct used for the starting configuration
@@ -35,6 +36,7 @@ struct StartingConfig
 {
 	bool vr_mode_enabled = true;
 	bool flying_mode_enabled = true;
+	float movement_speed = 2.5f;
 	bool create_octree_bin = false;
 	size_t max_points = 0;
 	char path[512] = "";
@@ -44,6 +46,7 @@ struct StartingConfig
 	unsigned int wwidth = 800;
 	unsigned int wheight = 600;
 	float bg_color[3] = { 0.0f, 0.0f, 0.0f };
+	float point_size = 0.5;	// Size of points in cm
 };
 
 class GUIManager

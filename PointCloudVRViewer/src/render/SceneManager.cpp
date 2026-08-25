@@ -94,7 +94,7 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     }
     else    // Screen Mode Setup 
     { 
-        _camera_ptr = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 3.0f));    // Create non VR Camera object
+        _camera_ptr = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 3.0f), _scene_config.movement_speed);    // Create non VR Camera object
     }
  
     glViewport(0, 0, _screen.scr_width, _screen.scr_height);
@@ -125,6 +125,13 @@ void SceneManager::SetBackgroundColor(float color[3])
     _scene_config.bg_color[2] = color[2];
 }
 
+void SceneManager::SetMovementSpeed(float speed)
+{
+    if (_scene_config.vr_enabled)
+        _vr_manager_ptr->movement_speed = speed;
+    else
+        _camera_ptr->MovementSpeed = speed;
+}
 
 void SceneManager::AddShader(Shader& shader)
 {
@@ -222,7 +229,7 @@ void SceneManager::ExecuteRenderLoop()
                 else                            // If VR disabled camera data obtained from Camera object
                 {
                     cameraPosition = _camera_ptr->Position;
-                    projection = glm::perspective(glm::radians(_camera_ptr->Zoom), (float)_screen.scr_width / (float)_screen.scr_height, 0.1f, 300.0f);
+                    projection = glm::perspective(glm::radians(_camera_ptr->Zoom), (float)_screen.scr_width / (float)_screen.scr_height, 0.1f, MAX_LOD_DISTANCE*1.5f);
                     view = _camera_ptr->GetViewMatrix();
                 }
 

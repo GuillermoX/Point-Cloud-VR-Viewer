@@ -23,6 +23,7 @@ int main(int argc, char** argv)
 	
 		app.add_flag("-v,--vr", config.vr_mode_enabled, "VR Mode enabled");
 		app.add_flag("-f,--flying", config.flying_mode_enabled, "Flying mode enabled");
+		app.add_option("-s,--speed", config.movement_speed, "Movement Speed (m/s)");
 		CLI::Option* opt_binary = app.add_flag("-b,--binary-octree", config.create_octree_bin, "Create Binary Octree");
 		app.add_option("-p,--points", config.max_points, "Create Binary Octree with specified max number of points")
 			->needs(opt_binary);
@@ -50,11 +51,14 @@ int main(int argc, char** argv)
 
 	scene_manager.ChangeWindowResolution(config.wwidth, config.wheight);
 	scene_manager.SetBackgroundColor(config.bg_color);
+	scene_manager.SetMovementSpeed(config.movement_speed);
 	scene_manager.SetVREnabled(config.vr_mode_enabled);
 	scene_manager.SetFlyingEnabled(config.flying_mode_enabled);
 
     // Build and compile shaders
     Shader shader("assets/shaders/point_cloud.vert", "assets/shaders/point_cloud.frag");
+	shader.use();
+	glUniform1f(glGetUniformLocation(shader.ID, "pointSize"), config.point_size/100.0);		// Set point size in meters
     scene_manager.AddShader(shader);    
 
     // Load Cloud Point
