@@ -16,9 +16,8 @@ void main()
 	gl_Position = projection * view * model * vec4(aPos, 1.0);
 	PointColor = aColor;	// Send color to fragment shader
 
-	// Supongamos que pasas la matriz 'projection' como uniform
-	float pointRadiusInMeters = 0.005; // Cada punto mide 2 cm en el mundo real
+	float pointRadiusInMeters = 0.005; // Each point is 0.5 cm in real life
 
-	// Fórmula matemática para mantener el tamaño físico constante en píxeles
+	// Keeps the same constant physical size in pixels 
 	gl_PointSize = (pointRadiusInMeters * projection[1][1] * screenHeight) / gl_Position.w;
 }
