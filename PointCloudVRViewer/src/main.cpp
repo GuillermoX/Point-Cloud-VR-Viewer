@@ -35,6 +35,7 @@ int main(int argc, char** argv)
 		app.add_option("-g,--gpumem", config.max_vram_gb, "Maximum memory to use by GPU (GBytes)");
 		app.add_option("-H,--wheight", config.wheight, "Window Height (non VR mode)");
 		app.add_option("-W,--wwidth", config.wwidth, "Window Width (non VR mode)");
+		app.add_option("-z,--point-size", config.point_size, "Point radius size (cm)");
 
 		CLI11_PARSE(app, argc, argv);
 
