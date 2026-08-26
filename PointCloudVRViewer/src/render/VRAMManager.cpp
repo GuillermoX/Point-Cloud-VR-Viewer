@@ -1,6 +1,10 @@
 #include <VRAMManager.hpp>
 #include <Octree.hpp>
 
+#include <windows.h>
+#include <dxgi.h>   // To get the VRAM capacity
+#pragma comment(lib, "dxgi.lib")
+
 void VRAMManager::RegisterNode(OctreeNode* node)
 {
 	_priority_vector.push_back(node);
@@ -78,6 +82,30 @@ bool VRAMManager::CanLoadToVRAM(size_t num_points, float priority)
 
 	return write_to_vram;
 	
+}
+
+
+size_t VRAMManager::GetDedicatedVRAM() { IDXGIFactory* pFactory = nullptr;
+    if (FAILED(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&pFactory)))
+        return 0;
+
+    IDXGIAdapter* pAdapter = nullptr;
+    size_t vram_mb = 0;
+
+	// Get main graphical adapter (index 0)
+    if (pFactory->EnumAdapters(0, &pAdapter) != DXGI_ERROR_NOT_FOUND)
+    {
+        DXGI_ADAPTER_DESC desc;
+        pAdapter->GetDesc(&desc);
+
+		// Convert from Bytes to Megabytes
+        vram_mb = desc.DedicatedVideoMemory / (1024 * 1024);
+
+        pAdapter->Release();
+    }
+    pFactory->Release();
+
+    return vram_mb;
 }
 
 void VRAMManager::deleteFirstNode()

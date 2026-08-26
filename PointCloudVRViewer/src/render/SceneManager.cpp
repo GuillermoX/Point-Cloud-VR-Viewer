@@ -15,8 +15,6 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    if(_scene_config.vr_enabled)
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Needed by some VR runtimes
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -53,11 +51,6 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
 		}
 	}
    
-    // Bind functions to glfw callbacks
-    if (!_scene_config.vr_enabled)
-    {
-        glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
-    }
 
     // glad: Load all OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -73,9 +66,26 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     // Make sure point size is enabled
 	glEnable(GL_PROGRAM_POINT_SIZE);
     
+    // Add this object to GLFW User Pointer to be used in callbacks
+    glfwSetWindowUserPointer(_window, this);
+
+
+
+}
+
+SceneManager::~SceneManager()
+{
+    glfwTerminate();
+}
+
+
+void SceneManager::InitCamera()
+{
 
     if (_scene_config.vr_enabled)
     {    
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Needed by some VR runtimes
+
         std::cout << "INFO: ----- VR IS ENABLED -----"  << std::endl;
         std::cout << "GPU in use with OpenGL: " << glGetString(GL_RENDERER) << std::endl;
         _vr_manager_ptr = std::make_unique<VRManager>(_window);     // Create VR manager
@@ -95,19 +105,13 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     else    // Screen Mode Setup 
     { 
         _camera_ptr = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 3.0f), _scene_config.movement_speed);    // Create non VR Camera object
+
+        // Bind functions to glfw callbacks
+        glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
+        glViewport(0, 0, _screen.scr_width, _screen.scr_height);
     }
  
-    glViewport(0, 0, _screen.scr_width, _screen.scr_height);
-
-    // Add this object to GLFW User Pointer to be used in callbacks
-    glfwSetWindowUserPointer(_window, this);
-
-
-}
-
-SceneManager::~SceneManager()
-{
-    glfwTerminate();
+    
 }
 
 

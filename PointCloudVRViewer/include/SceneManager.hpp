@@ -96,6 +96,12 @@ public:
 	~SceneManager();
 	
 	/**
+	 * @brief Initialices the engine camera depending on current VR mode
+	 * 
+	 */
+	void InitCamera();
+	
+	/**
 	 * @brief Scene config VR enabled setter
 	 * @param enabled: setter value to the VR enabled value
 	 */

@@ -1,5 +1,8 @@
 #include <GUIManager.hpp>
 
+#include <windows.h>	// Windows API
+#include <commdlg.h>	// File explorer API
+
 #include <filesystem>
 #include <shellapi.h>
 
@@ -506,4 +509,5 @@ void GUIManager::writeUnderlinedLink(std::string str, std::string url)
 		}
 	}
 }
+
 

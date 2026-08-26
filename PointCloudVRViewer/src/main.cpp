@@ -7,6 +7,8 @@
 #include <PointCloud.hpp>
 #include <GUIManager.hpp>
 
+#include <iostream>
+
 
 int main(int argc, char** argv)
 {
@@ -14,6 +16,8 @@ int main(int argc, char** argv)
 
     SceneManager scene_manager(config.wwidth, config.wheight);
 	GUIManager* gui_manager = GUIManager::Init(scene_manager.GetGLFWwindow());	
+	VRAMManager& vram_manager = VRAMManager::GetInstance();
+	config.max_vram_gb = (vram_manager.GetDedicatedVRAM() / 1024.0f)*0.8f;
 
     if (argc > 1)	// If CLI parameters specified
     {
@@ -46,14 +50,15 @@ int main(int argc, char** argv)
 		if (!gui_manager->StartMenu(config))
 			return 0;	// If exit menu without starting engine exit program
 	}
-
-    MAX_VRAM_BYTES = config.max_vram_gb * GB;
+	
+	vram_manager.SetMaxBytes(config.max_vram_gb * GB);
 	MAX_LOD_DISTANCE = config.max_lod_distance;
 
+	scene_manager.SetVREnabled(config.vr_mode_enabled);
+	scene_manager.InitCamera();
 	scene_manager.ChangeWindowResolution(config.wwidth, config.wheight);
 	scene_manager.SetBackgroundColor(config.bg_color);
 	scene_manager.SetMovementSpeed(config.movement_speed);
-	scene_manager.SetVREnabled(config.vr_mode_enabled);
 	scene_manager.SetFlyingEnabled(config.flying_mode_enabled);
 
     // Build and compile shaders

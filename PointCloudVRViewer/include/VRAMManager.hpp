@@ -7,8 +7,6 @@
 #define KB (1024ULL)
 #define MB (1024ULL * KB)
 #define GB (1024ULL * MB)
-//#define MAX_VRAM_BYTES 1ULL GB
-inline size_t MAX_VRAM_BYTES;
 #define THRESHOLD_LOW 0.90
 #define THRESHOLD_HIGH 0.95
 
@@ -36,10 +34,24 @@ public:
 	 */
 	bool CanLoadToVRAM(size_t num_points, float priority);
 
+	
+	/**
+	 * @brief Gets the dedicated VRAM of the system in MBytes
+	 */
+	size_t GetDedicatedVRAM();
+
 	/// @brief Gets the current VRAM's MegaBytes used by te program 
 	unsigned int GetCurrentMB() { return _current_bytes / (1*MB); };
 	/// @brief Gets the maximum VRAM's MegaBytes that can be used by te program 
 	unsigned int GetMaxMB() { return _max_bytes / (1*MB); };
+	/**
+	 * @brief Set maximum bytes 
+	 * @param max_bytes: Maximum bytes to set
+	 */
+	void SetMaxBytes(size_t max_bytes) { _max_bytes = max_bytes; };
+
+
+
 	/**
 	 * @brief Gets the instance of the VRAMManager
 	 * @details Follows a Singleton design pattern
@@ -52,7 +64,7 @@ public:
 
 private:
 	std::vector<OctreeNode*> _priority_vector;
-	size_t _max_bytes = MAX_VRAM_BYTES;
+	size_t _max_bytes = 0;
 	size_t _current_bytes = 0;
 
 

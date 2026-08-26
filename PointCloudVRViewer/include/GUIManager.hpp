@@ -19,11 +19,6 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#include <windows.h>	// Windows API
-#include <commdlg.h>	// File explorer API
-
-#pragma comment(lib, "Comdlg32.lib")
-
 #include "VRAMManager.hpp"
 
 #define INIT_CONFIG_PATH "./init.conf"
@@ -92,6 +87,7 @@ public:
 		return gui_manager;
 	}
 	
+
 	/**
 	 * @brief Singleton GUIManager instance getter
 	 */
@@ -146,6 +142,7 @@ private:
 	 * @param url: URL attached to the string
 	 */
 	void writeUnderlinedLink(std::string str, std::string url);
+
 
 };
 
