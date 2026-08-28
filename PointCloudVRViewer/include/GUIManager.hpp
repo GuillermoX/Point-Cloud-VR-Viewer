@@ -38,6 +38,7 @@ struct StartingConfig
 	unsigned int node_resolution = 64;
 	float max_lod_distance = 100.0f;
 	float max_vram_gb = 1.0f;
+	float max_fps = 60.0f;
 	unsigned int wwidth = 800;
 	unsigned int wheight = 600;
 	float bg_color[3] = { 0.0f, 0.0f, 0.0f };

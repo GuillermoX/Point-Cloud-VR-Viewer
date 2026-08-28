@@ -194,6 +194,13 @@ bool GUIManager::StartMenu(StartingConfig& config)
             // Performance section
             if (ImGui::CollapsingHeader("Performance"))
             {
+                ImGui::SetNextItemWidth(110.0f);
+                if (ImGui::InputFloat("Max FPS", &config.max_fps, 10.0f, 20.0f, "%.1f"))
+                {
+                    if (config.max_fps < 10.0f)
+                        config.max_fps = 10.0f
+                }
+
                 ImGui::SliderFloat("Distance where LOD is minimum", &config.max_lod_distance, 10.0f, 800.0f, "%.1f m");
                 if (ImGui::IsItemHovered())
                 {

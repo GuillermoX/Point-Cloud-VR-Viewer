@@ -45,6 +45,8 @@ struct timing_t
 {
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
+	double target_fps = 60.0;
+	std::chrono::duration<double> frame_target_time = std::chrono::duration<double>(1.0 / 60.0);
 };
 
 struct scene_config_t
@@ -119,6 +121,12 @@ public:
 	 * @param height: Desired window height
 	 */
 	void ChangeWindowResolution(unsigned int width, unsigned int height);
+
+	/**
+	 * @brief Sets the maximum FPS
+	 * @param max_fps: desired value of the max fps
+	 */
+	void SetMaxFPS(float max_fps) { _timing.frame_target_time = std::chrono::duration<double>(1.0 / max_fps); };
 	
 	/**
 	 * @brief Sets the background color

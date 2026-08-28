@@ -60,6 +60,7 @@ int main(int argc, char** argv)
 	scene_manager.SetBackgroundColor(config.bg_color);
 	scene_manager.SetMovementSpeed(config.movement_speed);
 	scene_manager.SetFlyingEnabled(config.flying_mode_enabled);
+	scene_manager.SetMaxFPS(config.max_fps);
 
 	if (config.vr_mode_enabled)
 		gui_manager->Destroy();

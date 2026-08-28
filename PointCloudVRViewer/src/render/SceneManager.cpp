@@ -3,6 +3,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
+#include <chrono>
+#include <thread>
+#pragma comment(lib, "winmm.lib")
+
 SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     _screen{ scr_width, scr_height, scr_width / 2.0f, scr_height / 2.0f },      // Screen initalization
     _scene_config{false, true},                                     // Scene config initialization
@@ -152,6 +156,8 @@ void SceneManager::AddPointCloud(PointCloud& point_cloud)
 
 void SceneManager::ExecuteRenderLoop()
 {
+    timeBeginPeriod(1);     // Force Windows to work with time precision of 1.0 ms instead of 15.6 ms
+
     // Tell GLFW to capture our mouse
     if (!_scene_config.vr_enabled)
     {
@@ -169,10 +175,14 @@ void SceneManager::ExecuteRenderLoop()
     // ----------- RENDER LOOP ------------
     while (!glfwWindowShouldClose(_window))
     {
+     
+
         // Per-frame time logic
         float currentFrame = static_cast<float>(glfwGetTime());
         _timing.deltaTime = currentFrame - _timing.lastFrame;
         _timing.lastFrame = currentFrame;
+
+        auto frame_start = std::chrono::high_resolution_clock::now();    // Time at start of frame
 
 
         // Always Process Input
@@ -271,7 +281,6 @@ void SceneManager::ExecuteRenderLoop()
                 _vr_manager_ptr->FinishFrame();
             else
             {
-
 				// HUD Rendering
                 GUIManager* gui_manager = GUIManager::GetInstance();
 				gui_manager->InitFrame();
@@ -281,9 +290,17 @@ void SceneManager::ExecuteRenderLoop()
 
 				gui_manager->DrawInfoMenu(_scene_config.hud_info_enabled);
 				gui_manager->Render();
+                
+                // Sleep thread to limit FPS
+				auto frame_end = std::chrono::high_resolution_clock::now();         // Time at the end of frame
+				std::chrono::duration<double> elapsed = frame_end - frame_start;    // Elapsed time in frame
 
-              
+				if (elapsed < _timing.frame_target_time) {  // If elapsed time smaller than target time
+					std::this_thread::sleep_for(std::chrono::duration<double>(_timing.frame_target_time - elapsed));
+				} 
             }
+
+
             glfwSwapBuffers(_window);
         }
         else
@@ -293,6 +310,7 @@ void SceneManager::ExecuteRenderLoop()
         }
 
     }
+    timeEndPeriod(1);   // Restore windows defaults time precision
 
 }
 
