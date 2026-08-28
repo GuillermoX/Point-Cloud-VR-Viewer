@@ -61,6 +61,9 @@ int main(int argc, char** argv)
 	scene_manager.SetMovementSpeed(config.movement_speed);
 	scene_manager.SetFlyingEnabled(config.flying_mode_enabled);
 
+	if (config.vr_mode_enabled)
+		gui_manager->Destroy();
+
     // Build and compile shaders
     Shader shader("assets/shaders/point_cloud.vert", "assets/shaders/point_cloud.frag");
 	shader.use();

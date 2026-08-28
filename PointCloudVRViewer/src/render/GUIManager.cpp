@@ -281,10 +281,21 @@ bool GUIManager::StartMenu(StartingConfig& config)
 
         glfwSwapBuffers(_window);
     }
-
-
+    
     glfwSetWindowAttrib(_window, GLFW_RESIZABLE, GLFW_TRUE);    // Make window resizable again
     return start_engine;
+}
+
+void GUIManager::Destroy()
+{
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+    glClearColor(0.0, 0.0, 0.0, 1.0);   // Clear window with black screen
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glfwSwapBuffers(_window);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glfwSwapBuffers(_window);
 }
 
 void GUIManager::DrawDebugHudInfo()
@@ -398,6 +409,7 @@ void GUIManager::InitFrame()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
+
 }
 
 void GUIManager::Render()

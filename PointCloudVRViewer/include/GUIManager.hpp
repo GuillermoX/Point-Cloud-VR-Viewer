@@ -74,6 +74,8 @@ public:
 	 * @brief Renders all drawn elements
 	 */
 	void Render();
+
+	void Destroy();
 	
 	/**
 	 * @brief Singleton GUIManager instance initialization

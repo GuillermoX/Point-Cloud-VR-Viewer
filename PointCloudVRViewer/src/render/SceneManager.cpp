@@ -101,6 +101,8 @@ void SceneManager::InitCamera()
 
         // Unbind FBO to avoid interferences
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glfwSwapInterval(0);    // Disable V-Sync to avoid glfwSwapBuffer from blocking CPU
     }
     else    // Screen Mode Setup 
     { 
@@ -151,8 +153,13 @@ void SceneManager::AddPointCloud(PointCloud& point_cloud)
 void SceneManager::ExecuteRenderLoop()
 {
     // Tell GLFW to capture our mouse
-    glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(_window, mouse_callback);  // Only activate callback function once the engine is started (not in menu)
+    if (!_scene_config.vr_enabled)
+    {
+        glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetCursorPosCallback(_window, mouse_callback);  // Only activate callback function once the engine is started (not in menu)
+    }
+    else
+        glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     if (_shader == nullptr)
     {
@@ -276,8 +283,8 @@ void SceneManager::ExecuteRenderLoop()
 				gui_manager->Render();
 
               
-                glfwSwapBuffers(_window);
             }
+            glfwSwapBuffers(_window);
         }
         else
         {
