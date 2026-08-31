@@ -46,7 +46,7 @@ struct timing_t
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 	double target_fps = 60.0;
-	std::chrono::duration<double> frame_target_time = std::chrono::duration<double>(1.0 / 60.0);
+	std::chrono::duration<double> frame_target_time;
 };
 
 struct scene_config_t

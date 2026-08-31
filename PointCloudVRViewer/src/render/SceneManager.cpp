@@ -70,6 +70,8 @@ SceneManager::SceneManager(unsigned int scr_width, unsigned int scr_height) :
     // Make sure point size is enabled
 	glEnable(GL_PROGRAM_POINT_SIZE);
     
+	// Bind functions to glfw callbacks
+	glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
     // Add this object to GLFW User Pointer to be used in callbacks
     glfwSetWindowUserPointer(_window, this);
 
@@ -111,9 +113,6 @@ void SceneManager::InitCamera()
     else    // Screen Mode Setup 
     { 
         _camera_ptr = std::make_unique<Camera>(glm::vec3(0.0f, 0.0f, 3.0f), _scene_config.movement_speed);    // Create non VR Camera object
-
-        // Bind functions to glfw callbacks
-        glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
         glViewport(0, 0, _screen.scr_width, _screen.scr_height);
     }
  
@@ -271,6 +270,22 @@ void SceneManager::ExecuteRenderLoop()
 
                 if (_scene_config.octree_debug_enabled)     // Debug visualization of the Octree boxes
                     point_cloud->Debug(vpm, cameraPosition);
+
+
+                if (_scene_config.vr_enabled)  // Share VR to screen draw into default buffer 
+                {
+                    glBindFramebuffer(GL_READ_FRAMEBUFFER, _vr_FBO);
+                    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+                    
+                    unsigned int half_width = _screen.scr_width / 2.0;
+
+					glBlitFramebuffer(
+						0, 0, _vr_manager_ptr->m_visorWidth,  _vr_manager_ptr->m_visorHeight, // Origin coord (VR)
+						eyeIndex*half_width, 0, half_width + eyeIndex*half_width , _screen.scr_height,           // Destination coords (screen)
+						GL_COLOR_BUFFER_BIT,                           // Color copy
+						GL_LINEAR                                      // Interpolation filter
+					);
+                }
             }
             
 
@@ -393,8 +408,7 @@ void SceneManager::framebuffer_size_callback(GLFWwindow* window, int width, int 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
     SceneManager* scene = static_cast<SceneManager*>(glfwGetWindowUserPointer(window));
-    scene->_screen.scr_width = width;
-    scene->_screen.scr_height = height;
+    scene->ChangeWindowResolution(width, height);
 
 }
 
