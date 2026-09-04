@@ -19,7 +19,7 @@
 
 <div align="center">
     <p align="center">
-    <sub><em>⬇️ Click image to watch the video demostration.</em></sub>
+    <sub><em>⬇️ Click image to watch the video demo.</em></sub>
   </p>
   <a href="https://www.youtube.com/watch?v=V-fOTT33HaI">
     <img src="https://i.ytimg.com/vi/V-fOTT33HaI/hqdefault.jpg" alt="Haz clic para reproducir" width="600" />
