@@ -15,7 +15,7 @@
 
 ## General Description
 
-**Point Cloud VR Viewer** is a graphics engine designed to load and visualize massive point cloud data in `.las` format. The program generates a **binary Octree structure** from raw `.las` files. Once these binary files are generated, the engine loads and streams the Octree structure into memory to render the point cloud efficiently.
+**Point Cloud VR Viewer** is a graphical tool designed to load and visualize massive point cloud data in `.las` format. The program generates a **binary Octree structure** from raw `.las` files. Once these binary files are generated, the engine loads and streams the Octree structure into memory to render the point cloud efficiently.
 
 <div align="center">
     <p align="center">
